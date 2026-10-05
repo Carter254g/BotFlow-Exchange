@@ -3,79 +3,250 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BotFlow Exchange | Token Swap on BOT Chain</title>
-<meta name="description" content="Swap BOT, WBOT, USDT and other BOT Chain tokens through the BDEX V3 router.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="app/styles.css">
+<title>BotFlow Exchange | Swap on BOT Chain</title>
+<meta name="description" content="BotFlow is an open source swap app for BOT Chain. Trade BOT, WBOT, USDT and any BOT Chain token through BDEX V3 liquidity, with native BOT support and price checks before you sign.">
+<meta property="og:title" content="BotFlow Exchange | Swap on BOT Chain">
+<meta property="og:description" content="Trade any BOT Chain token through BDEX V3 liquidity. Native BOT in and out, smart routing, and no BotFlow fee.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#2f5bff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232f5bff'/%3E%3Cpath d='M8 21c4 0 5-10 9-10s4 6 7 6' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/landing.css">
+<script>
+  // Old swap links (/?from=BOT&to=USDT&amount=10) now open in the app
+  if (/[?&](from|to|amount)=/.test(location.search)) location.replace("app/" + location.search);
+</script>
 </head>
 <body>
-<main>
-  <header>
-    <h1>BotFlow Exchange</h1>
-    <nav><button class="pill" id="setB" aria-label="Settings">⚙</button><button class="pill" id="conn">Connect wallet</button></nav>
-  </header>
-  <div class="card">
-    <div class="box">
-      <div class="row"><span class="lbl">You pay</span><span class="lbl">Balance: <span id="balA">–</span><button class="max" id="max">Max</button></span></div>
-      <div class="row"><input class="amt" id="amtA" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay"><button class="tok" id="symA" aria-label="Choose token to pay">WBOT</button></div>
-    </div>
-    <button class="flip" id="flip" aria-label="Swap direction">⇅</button>
-    <div class="box">
-      <div class="row"><span class="lbl">You receive (estimate)</span><span class="lbl">Balance: <span id="balB">–</span></span></div>
-      <div class="row"><input class="amt" id="amtB" placeholder="0.0" readonly aria-label="Amount to receive"><button class="tok" id="symB" aria-label="Choose token to receive">USDT</button></div>
-    </div>
-    <button class="go" id="go" disabled>Connect wallet</button>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./" aria-label="BotFlow Exchange home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M8 21c4 0 5-10 9-10s4 6 7 6"/></svg>
+      <span>BotFlow</span>
+    </a>
+    <nav aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#safety">Safety</a>
+      <a href="#developers">Developers</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="app/">Launch app</a>
   </div>
-  <div class="info">
-    <div><span>Rate</span><span class="v" id="rate">–</span></div>
-    <div><span>Route</span><span class="v" id="route">–</span></div>
-    <div><span>Price impact</span><span class="v" id="impact">–</span></div>
-    <div><span>Max slippage</span><span class="v" id="slipV">0.5%</span></div>
-    <div><span>Minimum received</span><span class="v" id="minOut">–</span></div>
-    <div><span>Network fee</span><span class="v" id="gasV">–</span></div>
-  </div>
-  <div class="tools"><button class="link" id="share">Copy swap link</button><button class="link" id="aprB">Approvals</button></div>
-  <div id="msg" role="status"></div>
-  <section id="hist" hidden>
-    <div class="row"><h2>Recent activity</h2><button class="max" id="histClr">Clear</button></div>
-    <ul id="histL"></ul>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <h1>Swap on BOT Chain without the extra steps.</h1>
+        <p class="lede">BotFlow finds the best route through BDEX V3 liquidity, takes native BOT in and out, and checks the price again right before you sign.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="app/">Launch app</a>
+          <a class="btn btn-ghost" href="https://github.com/Carter254g/BotFlow-Exchange" target="_blank" rel="noopener">View source on GitHub</a>
+        </div>
+        <ul class="ticks">
+          <li>No BotFlow fee</li>
+          <li>Non-custodial</li>
+          <li>Open source, MIT</li>
+        </ul>
+      </div>
+
+      <figure class="route" aria-labelledby="routeCap">
+        <div class="route-top">
+          <span class="lbl">Example trade</span>
+          <span class="live" id="liveTag"><i></i><span id="liveTxt">Fetching live quote</span></span>
+        </div>
+        <div class="route-amts">
+          <div><span class="lbl">You pay</span><b class="num">100 BOT</b></div>
+          <div class="ta-r"><span class="lbl">You receive</span><b class="num" id="qOut">…</b></div>
+        </div>
+        <div class="flow" aria-hidden="true">
+          <svg viewBox="0 0 400 96" preserveAspectRatio="none">
+            <path class="flow-bg" d="M30 60 C 110 60, 110 30, 200 30 S 290 60, 370 60"/>
+            <path class="flow-line" d="M30 60 C 110 60, 110 30, 200 30 S 290 60, 370 60" pathLength="1"/>
+          </svg>
+          <span class="node n1">BOT</span>
+          <span class="node n2">WBOT</span>
+          <span class="node n3">USDT</span>
+          <span class="hop h1">wrap 1:1</span>
+          <span class="hop h2" id="qFee">pool fee</span>
+        </div>
+        <ul class="checks">
+          <li>Route chosen across every fee tier</li>
+          <li>Price re-checked before signing</li>
+          <li>Swap simulated, so a failing trade costs no gas</li>
+        </ul>
+        <figcaption id="routeCap" class="lbl">Live from the BDEX V3 Quoter on BOT Chain. Prices move, so the app always shows the current quote.</figcaption>
+      </figure>
+    </div>
   </section>
-  <footer>Swaps run through the BDEX V3 router on BOT Chain (chain ID 677). Quotes refresh every 15 seconds and are checked again right before you sign. Settings, imported tokens and recent activity are saved only in this browser. BotFlow Exchange is an independent interface and is not affiliated with BOT Chain.</footer>
+
+  <section class="band">
+    <div class="wrap">
+      <p class="band-lede">Most swap tools on a new chain make you wrap BOT in one place, approve in another and hope the price hasn't moved by the time you sign. BotFlow puts all of it in one flow and tells you plainly what each trade will cost.</p>
+    </div>
+  </section>
+
+  <section class="features wrap" aria-labelledby="featT">
+    <h2 id="featT">What BotFlow does for you</h2>
+    <div class="feat-grid">
+      <article class="feat feat-lg">
+        <h3>Smart routing</h3>
+        <p>Every trade is quoted on direct pools at all four BDEX fee tiers and on two-hop routes through WBOT and USDT. You get the route that returns the most. Tokens without a direct pool can still be traded.</p>
+        <div class="mini" aria-hidden="true">
+          <span>XYZ</span><em>0.3%</em><span>WBOT</span><em>0.05%</em><span>USDT</span>
+        </div>
+      </article>
+      <article class="feat">
+        <h3>Native BOT, in and out</h3>
+        <p>Pay with BOT or receive BOT. Wrapping and unwrapping happen inside the trade, and BOT to WBOT is a direct 1:1 wrap with no pool fee.</p>
+      </article>
+      <article class="feat">
+        <h3>Know the cost first</h3>
+        <p>Rate, route, price impact, minimum received and network fee are shown before you sign. High price impact turns the button red.</p>
+      </article>
+      <article class="feat">
+        <h3>Any token, carefully</h3>
+        <p>Paste any token address to trade it. BotFlow reads it from the chain and asks you to check it on the explorer before importing.</p>
+      </article>
+      <article class="feat">
+        <h3>Links that open a trade</h3>
+        <p>Share a link with the pair and amount filled in. Projects can send their community straight to a ready trade.</p>
+        <code class="url">…/app/?from=BOT&amp;to=USDT&amp;amount=10</code>
+      </article>
+    </div>
+  </section>
+
+  <section class="how" id="how" aria-labelledby="howT">
+    <div class="wrap">
+      <h2 id="howT">How a swap works</h2>
+      <p class="sub">BotFlow only asks your wallet for the steps your trade actually needs.</p>
+      <ol class="steps">
+        <li><h3>Quote</h3><p>The best route is found across every pool and refreshed every 15 seconds.</p></li>
+        <li><h3>Prepare</h3><p>BOT is wrapped and the token approved, but only if needed. Approvals are for the exact amount by default.</p></li>
+        <li><h3>Check</h3><p>The route is quoted again and the swap simulated. If the price fell below your minimum, nothing is sent.</p></li>
+        <li><h3>Swap</h3><p>You sign once. If you asked for BOT, it is unwrapped and sent to you.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="safety wrap" id="safety" aria-labelledby="safeT">
+    <div class="safety-head">
+      <h2 id="safeT">Your keys, your funds</h2>
+      <p class="sub">BotFlow never holds your tokens. Every transaction is signed in your own wallet, and you stay in control of what the router can spend.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>Approvals panel</dt><dd>See every token the router can spend from your wallet and revoke any of them in one click.</dd></div>
+      <div><dt>Slippage and deadline</dt><dd>Set your own limits. Very low or very high values come with a warning.</dd></div>
+      <div><dt>Gas reserve</dt><dd>Swapping BOT always leaves 0.01 BOT in your wallet so you can pay network fees.</dd></div>
+      <div><dt>Plain errors</dt><dd>When something fails, you're told what happened and what to do next.</dd></div>
+    </dl>
+  </section>
+
+  <section class="dev" id="developers" aria-labelledby="devT">
+    <div class="wrap dev-in">
+      <div>
+        <h2 id="devT">Built in the open</h2>
+        <p>BotFlowRouter is a Solidity contract that sits in front of BDEX V3. It handles native BOT in one transaction, enforces your minimum on what you actually receive, supports fee-on-transfer tokens, and never keeps funds or approvals between calls.</p>
+        <ul class="stats">
+          <li><b>24</b><span>unit and fuzz tests</span></li>
+          <li><b>97%</b><span>line coverage</span></li>
+          <li><b>0.30%</b><span>hard fee cap in code</span></li>
+        </ul>
+        <p class="note">Tested with Foundry, including a fork test against live BDEX pools. Not yet independently audited.</p>
+        <div class="ctas">
+          <a class="btn btn-light" href="https://github.com/Carter254g/BotFlow-Exchange/blob/main/src/BotFlowRouter.sol" target="_blank" rel="noopener">Read the contract</a>
+          <a class="btn btn-ghost-dark" href="https://github.com/Carter254g/BotFlow-Exchange/tree/main/test" target="_blank" rel="noopener">See the tests</a>
+        </div>
+      </div>
+      <pre class="code" aria-label="BotFlowRouter swap functions"><code><span class="c">// Native BOT in, any token out</span>
+<span class="k">function</span> <span class="f">swapExactBOTForTokens</span>(
+  <span class="t">bytes</span> path,
+  <span class="t">uint256</span> minOut,
+  <span class="t">address</span> recipient,
+  <span class="t">uint256</span> deadline
+) <span class="k">external payable</span>
+
+<span class="c">// Any token in, native BOT out</span>
+<span class="k">function</span> <span class="f">swapExactTokensForBOT</span>(...)
+
+<span class="c">// Token to token, single or multi-hop</span>
+<span class="k">function</span> <span class="f">swapExactTokensForTokens</span>(...)</code></pre>
+    </div>
+  </section>
+
+  <section class="contracts wrap" aria-labelledby="addrT">
+    <h2 id="addrT">Contracts on BOT Chain</h2>
+    <p class="sub">Always check addresses on the explorer before you trade.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th scope="col">Contract</th><th scope="col">Address</th></tr></thead>
+        <tbody>
+          <tr><td>BDEX V3 SwapRouter</td><td><a class="addr" href="https://scan.botchain.ai/address/0x07032d47A1b9f8460cBeE9dC17c1d3E438693929" target="_blank" rel="noopener">0x07032d47A1b9f8460cBeE9dC17c1d3E438693929</a></td></tr>
+          <tr><td>BDEX V3 Quoter</td><td><a class="addr" href="https://scan.botchain.ai/address/0x034A705b36067cff99ABf5C662Be881cBd8d0176" target="_blank" rel="noopener">0x034A705b36067cff99ABf5C662Be881cBd8d0176</a></td></tr>
+          <tr><td>WBOT</td><td><a class="addr" href="https://scan.botchain.ai/address/0xD5452816194a3784dBa983426cCe7c122F4abd30" target="_blank" rel="noopener">0xD5452816194a3784dBa983426cCe7c122F4abd30</a></td></tr>
+          <tr><td>USDT</td><td><a class="addr" href="https://scan.botchain.ai/address/0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C" target="_blank" rel="noopener">0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C</a></td></tr>
+          <tr><td>BotFlowRouter</td><td class="pending">Deployment coming soon</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="faq wrap" id="faq" aria-labelledby="faqT">
+    <h2 id="faqT">Questions</h2>
+    <details>
+      <summary>Does BotFlow hold my funds?</summary>
+      <p>No. Every trade is signed in your own wallet and goes straight to the BOT Chain contracts. BotFlow has no backend and never has access to your keys.</p>
+    </details>
+    <details>
+      <summary>What does a swap cost?</summary>
+      <p>BotFlow charges no fee. You pay the BDEX pool fee for the route (0.01% to 1%, shown before you sign) and the BOT Chain network fee.</p>
+    </details>
+    <details>
+      <summary>Which wallets work?</summary>
+      <p>Any EVM wallet, including MetaMask, OKX Wallet, Bitget Wallet and TokenPocket, on desktop or in a wallet's built-in browser. BotFlow adds BOT Chain to your wallet if it isn't there yet.</p>
+    </details>
+    <details>
+      <summary>Is the contract audited?</summary>
+      <p>Not yet. BotFlowRouter has a full test suite and is open source for anyone to review. An independent security review is on the roadmap before it handles user trades.</p>
+    </details>
+    <details>
+      <summary>Is BotFlow part of BOT Chain?</summary>
+      <p>No. BotFlow is an independent, open source project built on BOT Chain and BDEX liquidity.</p>
+    </details>
+  </section>
+
+  <section class="cta-end">
+    <div class="wrap"><div class="cta-in">
+      <h2>Ready to trade?</h2>
+      <a class="btn btn-primary" href="app/">Launch app</a>
+    </div></div>
+  </section>
 </main>
 
-<dialog id="pick" aria-labelledby="pickT">
-  <div class="row"><h2 id="pickT">Select a token</h2><button class="x" data-close aria-label="Close">✕</button></div>
-  <input id="pickQ" placeholder="Search by name or paste an address" autocomplete="off" spellcheck="false" aria-label="Search tokens">
-  <ul class="tlist" id="pickL"></ul>
-  <div id="pickM"></div>
-</dialog>
-
-<dialog id="set" aria-labelledby="setT">
-  <div class="row"><h2 id="setT">Settings</h2><button class="x" data-close aria-label="Close">✕</button></div>
-  <div class="fld">
-    <span class="lbl">Max slippage</span>
-    <div class="slip" id="slip"><button data-b="10">0.1%</button><button data-b="50">0.5%</button><button data-b="100">1%</button><input class="num" id="slipC" inputmode="decimal" placeholder="Custom %" aria-label="Custom slippage percent"></div>
-    <p class="lbl" id="slipW"></p>
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="brand" href="./" aria-label="BotFlow Exchange home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M8 21c4 0 5-10 9-10s4 6 7 6"/></svg>
+        <span>BotFlow</span>
+      </a>
+      <p>BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Trading tokens carries risk. Only trade what you can afford to lose.</p>
+    </div>
+    <ul>
+      <li><a href="app/">Swap app</a></li>
+      <li><a href="https://github.com/Carter254g/BotFlow-Exchange" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOT Chain explorer</a></li>
+      <li><a href="https://github.com/Carter254g/BotFlow-Exchange/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></li>
+    </ul>
   </div>
-  <div class="fld">
-    <label class="lbl" for="dl">Transaction deadline</label>
-    <div class="slip"><input class="num" id="dl" inputmode="numeric" aria-describedby="dlH"><span class="lbl" id="dlH">minutes. The swap is cancelled if it isn't confirmed in time.</span></div>
-  </div>
-  <div class="fld">
-    <span class="lbl">Token approval</span>
-    <div class="slip" id="apv"><button data-v="exact">Exact amount</button><button data-v="max">Unlimited</button></div>
-    <p class="lbl">Exact amount asks for approval on each swap. Unlimited asks once per token but lets the router spend any amount of it. You can revoke approvals at any time.</p>
-  </div>
-</dialog>
+</footer>
 
-<dialog id="apr" aria-labelledby="aprT">
-  <div class="row"><h2 id="aprT">Token approvals</h2><button class="x" data-close aria-label="Close">✕</button></div>
-  <p class="lbl">Tokens the BDEX router is allowed to spend from your wallet. Revoking sets the allowance to zero.</p>
-  <ul class="tlist" id="aprL"></ul>
-  <p class="lbl" id="aprM"></p>
-</dialog>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
-<script src="app/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js" defer></script>
+<script src="assets/landing.js" defer></script>
 </body>
 </html>

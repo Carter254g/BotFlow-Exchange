@@ -2,7 +2,8 @@
 
 BotFlow Exchange is an open source swap app for BOT Chain (chain ID 677). It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
 
-**Live demo:** https://carter254g.github.io/BotFlow-Exchange/
+**Website:** https://carter254g.github.io/BotFlow-Exchange/  
+**Swap app:** https://carter254g.github.io/BotFlow-Exchange/app/
 
 ## Why it exists
 
@@ -31,7 +32,7 @@ New users on BOT Chain often hold native BOT but find that DEX pools trade WBOT,
 
 **Convenience**
 - **Network fee estimate** in BOT before signing.
-- **Shareable swap links.** `?from=BOT&to=USDT&amount=10` opens the page with that swap filled in, so communities and projects can link straight to a trade. Unknown token addresses in a link are never imported automatically.
+- **Shareable swap links.** `/app/?from=BOT&to=USDT&amount=10` opens the page with that swap filled in, so communities and projects can link straight to a trade. Unknown token addresses in a link are never imported automatically.
 - **Add token to wallet** after a swap.
 - **Recent activity** for each wallet with explorer links. Pending transactions are tracked even if the page is closed, and their result is checked the next time the wallet connects.
 - **Wallet and network handling.** Works with MetaMask, OKX, Bitget, TokenPocket and other EVM wallets. Switches to BOT Chain, or adds it if the wallet doesn't have it.
@@ -103,13 +104,13 @@ Network: BOT Chain, chain ID 677, RPC `https://rpc.botchain.ai`, explorer https:
 
 ## Run the web app
 
-No build step. Open `index.html` in a browser, or serve the folder with any static host:
+No build step. Serve the folder with any static host:
 
 ```
 python3 -m http.server 8000
 ```
 
-then visit http://localhost:8000. The live demo is served by GitHub Pages from the `main` branch.
+then visit http://localhost:8000 for the landing page or http://localhost:8000/app/ for the swap app. The live demo is served by GitHub Pages from the `main` branch.
 
 ## Tech
 
@@ -138,7 +139,9 @@ then visit http://localhost:8000. The live demo is served by GitHub Pages from t
 ## Repository layout
 
 ```
-index.html                 web app entry page (served by GitHub Pages)
+index.html                 landing page (served by GitHub Pages)
+assets/                    landing page styles and live quote script
+app/index.html             swap app
 app/app.js                 web app logic: quoting, routing, wallet, swaps
 app/styles.css             web app styles, light and dark themes
 src/BotFlowRouter.sol      router contract

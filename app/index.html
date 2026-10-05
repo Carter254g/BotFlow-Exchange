@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BotFlow Exchange | Token Swap on BOT Chain</title>
+<meta name="description" content="Swap BOT, WBOT, USDT and other BOT Chain tokens through the BDEX V3 router.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1><a href="../" title="BotFlow home">BotFlow Exchange</a></h1>
+    <nav><button class="pill" id="setB" aria-label="Settings">⚙</button><button class="pill" id="conn">Connect wallet</button></nav>
+  </header>
+  <div class="card">
+    <div class="box">
+      <div class="row"><span class="lbl">You pay</span><span class="lbl">Balance: <span id="balA">–</span><button class="max" id="max">Max</button></span></div>
+      <div class="row"><input class="amt" id="amtA" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay"><button class="tok" id="symA" aria-label="Choose token to pay">WBOT</button></div>
+    </div>
+    <button class="flip" id="flip" aria-label="Swap direction">⇅</button>
+    <div class="box">
+      <div class="row"><span class="lbl">You receive (estimate)</span><span class="lbl">Balance: <span id="balB">–</span></span></div>
+      <div class="row"><input class="amt" id="amtB" placeholder="0.0" readonly aria-label="Amount to receive"><button class="tok" id="symB" aria-label="Choose token to receive">USDT</button></div>
+    </div>
+    <button class="go" id="go" disabled>Connect wallet</button>
+  </div>
+  <div class="info">
+    <div><span>Rate</span><span class="v" id="rate">–</span></div>
+    <div><span>Route</span><span class="v" id="route">–</span></div>
+    <div><span>Price impact</span><span class="v" id="impact">–</span></div>
+    <div><span>Max slippage</span><span class="v" id="slipV">0.5%</span></div>
+    <div><span>Minimum received</span><span class="v" id="minOut">–</span></div>
+    <div><span>Network fee</span><span class="v" id="gasV">–</span></div>
+  </div>
+  <div class="tools"><button class="link" id="share">Copy swap link</button><button class="link" id="aprB">Approvals</button></div>
+  <div id="msg" role="status"></div>
+  <section id="hist" hidden>
+    <div class="row"><h2>Recent activity</h2><button class="max" id="histClr">Clear</button></div>
+    <ul id="histL"></ul>
+  </section>
+  <footer>Swaps run through the BDEX V3 router on BOT Chain (chain ID 677). Quotes refresh every 15 seconds and are checked again right before you sign. Settings, imported tokens and recent activity are saved only in this browser. BotFlow Exchange is an independent interface and is not affiliated with BOT Chain.</footer>
+</main>
+
+<dialog id="pick" aria-labelledby="pickT">
+  <div class="row"><h2 id="pickT">Select a token</h2><button class="x" data-close aria-label="Close">✕</button></div>
+  <input id="pickQ" placeholder="Search by name or paste an address" autocomplete="off" spellcheck="false" aria-label="Search tokens">
+  <ul class="tlist" id="pickL"></ul>
+  <div id="pickM"></div>
+</dialog>
+
+<dialog id="set" aria-labelledby="setT">
+  <div class="row"><h2 id="setT">Settings</h2><button class="x" data-close aria-label="Close">✕</button></div>
+  <div class="fld">
+    <span class="lbl">Max slippage</span>
+    <div class="slip" id="slip"><button data-b="10">0.1%</button><button data-b="50">0.5%</button><button data-b="100">1%</button><input class="num" id="slipC" inputmode="decimal" placeholder="Custom %" aria-label="Custom slippage percent"></div>
+    <p class="lbl" id="slipW"></p>
+  </div>
+  <div class="fld">
+    <label class="lbl" for="dl">Transaction deadline</label>
+    <div class="slip"><input class="num" id="dl" inputmode="numeric" aria-describedby="dlH"><span class="lbl" id="dlH">minutes. The swap is cancelled if it isn't confirmed in time.</span></div>
+  </div>
+  <div class="fld">
+    <span class="lbl">Token approval</span>
+    <div class="slip" id="apv"><button data-v="exact">Exact amount</button><button data-v="max">Unlimited</button></div>
+    <p class="lbl">Exact amount asks for approval on each swap. Unlimited asks once per token but lets the router spend any amount of it. You can revoke approvals at any time.</p>
+  </div>
+</dialog>
+
+<dialog id="apr" aria-labelledby="aprT">
+  <div class="row"><h2 id="aprT">Token approvals</h2><button class="x" data-close aria-label="Close">✕</button></div>
+  <p class="lbl">Tokens the BDEX router is allowed to spend from your wallet. Revoking sets the allowance to zero.</p>
+  <ul class="tlist" id="aprL"></ul>
+  <p class="lbl" id="aprM"></p>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

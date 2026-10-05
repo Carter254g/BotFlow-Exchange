@@ -62,3 +62,4 @@ button.opt:hover,.opt[aria-current="true"]{background:var(--in)}
 .rm.strong{color:var(--err);font-weight:700}
 .imp{margin-top:8px;padding:12px;border:1px solid var(--warn);border-radius:12px;font-size:.82rem;display:grid;gap:8px}
 .imp button{padding:10px;border:0;border-radius:10px;background:var(--ac);color:var(--acfg);font-weight:700}
+h1 a{color:inherit;text-decoration:none}
