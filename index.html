@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BotFlow Exchange | Token Swap on BOT Chain</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#e9eef8;--card:#fff;--fg:#0f1530;--mut:#5d6684;--bd:#d5dcee;--ac:#2f5bff;--acfg:#fff;--in:#f1f4fb;--err:#c62828;--ok:#1b7f4b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a}}
+:root[data-theme="dark"]{--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center;padding:20px 14px}
+main{width:100%;max-width:440px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+h1{font-size:1.35rem;margin:0;font-weight:700;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.pill{background:var(--card);border:1px solid var(--bd);color:var(--fg);border-radius:999px;padding:7px 13px;font-size:.85rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:10px}
+.box{background:var(--in);border-radius:14px;padding:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lbl{font-size:.8rem;color:var(--mut)}
+.amt{width:100%;min-width:0;border:0;background:transparent;color:var(--fg);font:inherit;font-size:1.7rem;font-weight:500;padding:6px 0;outline-offset:4px}
+.amt::placeholder{color:var(--mut)}
+.tok{font-weight:700;font-size:1.05rem;background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:7px 14px;white-space:nowrap}
+.max{background:none;border:0;color:var(--ac);font-size:.8rem;font-weight:700;padding:0 0 0 6px}
+.flip{display:block;margin:-12px auto;position:relative;z-index:1;width:38px;height:38px;border-radius:12px;border:3px solid var(--card);background:var(--ac);color:var(--acfg);font-size:1.1rem}
+.go{width:100%;margin-top:10px;padding:16px;border:0;border-radius:14px;background:var(--ac);color:var(--acfg);font-size:1.05rem;font-weight:700}
+.go:disabled{opacity:.45;cursor:not-allowed}
+.info{margin:12px 4px 0;font-size:.85rem;color:var(--mut);display:grid;gap:5px}
+.info div{display:flex;justify-content:space-between;gap:10px}
+.slip{display:flex;gap:6px}
+.slip button{background:var(--in);border:1px solid var(--bd);color:var(--fg);border-radius:8px;padding:3px 9px;font-size:.8rem}
+.slip button[aria-pressed="true"]{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
+#msg{margin:12px 4px 0;font-size:.88rem;min-height:1.2em;word-break:break-word}
+#msg.err{color:var(--err)}#msg.ok{color:var(--ok)}
+#msg a{color:inherit}
+footer{margin:18px 4px 0;font-size:.75rem;color:var(--mut);line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>BotFlow Exchange</h1>
+    <button class="pill" id="conn">Connect wallet</button>
+  </header>
+  <div class="card">
+    <div class="box">
+      <div class="row"><span class="lbl">You pay</span><span class="lbl">Balance: <span id="balA">–</span><button class="max" id="max">Max</button></span></div>
+      <div class="row"><input class="amt" id="amtA" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay"><span class="tok" id="symA">WBOT</span></div>
+    </div>
+    <button class="flip" id="flip" aria-label="Swap direction">⇅</button>
+    <div class="box">
+      <div class="row"><span class="lbl">You receive (estimate)</span><span class="lbl">Balance: <span id="balB">–</span></span></div>
+      <div class="row"><input class="amt" id="amtB" placeholder="0.0" readonly aria-label="Amount to receive"><span class="tok" id="symB">USDT</span></div>
+    </div>
+    <button class="go" id="go" disabled>Connect wallet</button>
+  </div>
+  <div class="info">
+    <div><span>Max slippage</span><span class="slip" id="slip"><button data-b="50" aria-pressed="true">0.5%</button><button data-b="100" aria-pressed="false">1%</button><button data-b="300" aria-pressed="false">3%</button></span></div>
+    <div><span>Minimum received</span><span id="minOut">–</span></div>
+    <div><span>Pool fee tier</span><span id="feeT">–</span></div>
+  </div>
+  <div id="msg" role="status"></div>
+  <footer>Swaps run through the BDEX V3 router on BOT Chain (chain ID 677). Quotes and transactions go through your wallet. Check the amounts in your wallet before you confirm. BotFlow Exchange is an independent interface and is not affiliated with BOT Chain.</footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script>
+const CHAIN={id:677,hex:"0x2a5",name:"BOT Chain",rpc:"https://rpc.botchain.ai",scan:"https://scan.botchain.ai"};
+const ADDR={router:"0x07032d47A1b9f8460cBeE9dC17c1d3E438693929",quoter:"0x034A705b36067cff99ABf5C662Be881cBd8d0176"};
+const T={WBOT:{a:"0xD5452816194a3784dBa983426cCe7c122F4abd30",d:18},USDT:{a:"0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C",d:6}};
+const ERC20=["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
+const QABI=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
+const RABI=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256 amountOut)"];
+const FEES=[3000,500,10000,100];
+const $=id=>document.getElementById(id);
+let S={from:"WBOT",to:"USDT",acct:null,prov:null,signer:null,onChain:false,bal:{},q:null,bps:50,busy:false,qid:0,timer:null};
+
+function say(t,c){const m=$("msg");m.className=c||"";m.innerHTML="";if(typeof t==="string")m.textContent=t;else m.appendChild(t)}
+function fmt(v,d){const s=ethers.formatUnits(v,d);const [i,f=""]=s.split(".");return f.replace(/0+$/,"").slice(0,6)?i+"."+f.replace(/0+$/,"").slice(0,6):i}
+function short(a){return a.slice(0,6)+"…"+a.slice(-4)}
+function amountIn(){const v=$("amtA").value.trim();if(!v||isNaN(v)||+v<=0)return null;try{return ethers.parseUnits(v,T[S.from].d)}catch(e){return null}}
+
+async function connect(){
+  if(!window.ethereum){say("No wallet found. Install MetaMask, OKX, Bitget or TokenPocket, or open this page in a wallet browser.","err");return}
+  try{
+    S.prov=new ethers.BrowserProvider(window.ethereum);
+    await S.prov.send("eth_requestAccounts",[]);
+    S.signer=await S.prov.getSigner();S.acct=await S.signer.getAddress();
+    await checkChain();
+    window.ethereum.on&&window.ethereum.on("chainChanged",()=>location.reload());
+    window.ethereum.on&&window.ethereum.on("accountsChanged",()=>location.reload());
+  }catch(e){say(e.shortMessage||e.message||"Connection cancelled","err")}
+  render();
+}
+async function checkChain(){
+  const net=await S.prov.getNetwork();S.onChain=Number(net.chainId)===CHAIN.id;
+  if(S.onChain){await loadDecimals();await balances()}
+}
+async function switchChain(){
+  try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN.hex}]})}
+  catch(e){
+    if(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902)||/Unrecognized|not added/i.test(e.message||"")){
+      await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN.hex,chainName:CHAIN.name,rpcUrls:[CHAIN.rpc],nativeCurrency:{name:"BOT",symbol:"BOT",decimals:18},blockExplorerUrls:[CHAIN.scan]}]});
+    }else throw e;
+  }
+  location.reload();
+}
+async function loadDecimals(){
+  try{T.USDT.d=Number(await new ethers.Contract(T.USDT.a,ERC20,S.prov).decimals())}catch(e){}
+}
+async function balances(){
+  for(const k of ["WBOT","USDT"]){
+    try{S.bal[k]=await new ethers.Contract(T[k].a,ERC20,S.prov).balanceOf(S.acct)}catch(e){S.bal[k]=null}
+  }
+  render();
+}
+function render(){
+  $("symA").textContent=S.from;$("symB").textContent=S.to;
+  const bA=S.bal[S.from],bB=S.bal[S.to];
+  $("balA").textContent=bA==null?"–":fmt(bA,T[S.from].d);
+  $("balB").textContent=bB==null?"–":fmt(bB,T[S.to].d);
+  $("conn").textContent=S.acct?short(S.acct):"Connect wallet";
+  const g=$("go"),a=amountIn();let txt,dis=true;
+  if(!S.acct)txt="Connect wallet",dis=false;
+  else if(!S.onChain)txt="Switch to BOT Chain",dis=false;
+  else if(S.busy)txt="Waiting for wallet…";
+  else if(!a)txt="Enter an amount";
+  else if(bA!=null&&a>bA)txt="Insufficient "+S.from;
+  else if(!S.q)txt="Finding best price…";
+  else if(S.q.none)txt="No liquidity for this pair";
+  else txt="Swap",dis=false;
+  g.textContent=txt;g.disabled=dis;
+  if(S.q&&!S.q.none){$("amtB").value=fmt(S.q.out,T[S.to].d);const mo=S.q.out*BigInt(10000-S.bps)/10000n;$("minOut").textContent=fmt(mo,T[S.to].d)+" "+S.to;$("feeT").textContent=(S.q.fee/10000)+"%"}
+  else{$("amtB").value="";$("minOut").textContent="–";$("feeT").textContent="–"}
+}
+function requote(){
+  S.q=null;render();clearTimeout(S.timer);
+  const a=amountIn();if(!a||!S.onChain)return;
+  const id=++S.qid;
+  S.timer=setTimeout(async()=>{
+    const qc=new ethers.Contract(ADDR.quoter,QABI,S.prov);let best=null;
+    await Promise.all(FEES.map(async fee=>{
+      try{const r=await qc.quoteExactInputSingle.staticCall({tokenIn:T[S.from].a,tokenOut:T[S.to].a,amountIn:a,fee,sqrtPriceLimitX96:0});
+        if(r[0]>0n&&(!best||r[0]>best.out))best={out:r[0],fee}}catch(e){}
+    }));
+    if(id!==S.qid)return;
+    S.q=best||{none:true};render();
+  },350);
+}
+async function onGo(){
+  if(!S.acct)return connect();
+  if(!S.onChain){try{await switchChain()}catch(e){say(e.shortMessage||e.message,"err")}return}
+  const a=amountIn();if(!a||!S.q||S.q.none)return;
+  S.busy=true;render();
+  try{
+    const tin=new ethers.Contract(T[S.from].a,ERC20,S.signer);
+    const al=await tin.allowance(S.acct,ADDR.router);
+    if(al<a){say("Approve "+S.from+" in your wallet (1 of 2)…");const ap=await tin.approve(ADDR.router,a);await ap.wait()}
+    say("Confirm the swap in your wallet…");
+    const minOut=S.q.out*BigInt(10000-S.bps)/10000n;
+    const r=new ethers.Contract(ADDR.router,RABI,S.signer);
+    const tx=await r.exactInputSingle({tokenIn:T[S.from].a,tokenOut:T[S.to].a,fee:S.q.fee,recipient:S.acct,deadline:Math.floor(Date.now()/1000)+1200,amountIn:a,amountOutMinimum:minOut,sqrtPriceLimitX96:0});
+    say("Swap submitted. Waiting for confirmation…");
+    await tx.wait();
+    const el=document.createElement("span");el.textContent="Swapped. ";
+    const l=document.createElement("a");l.href=CHAIN.scan+"/tx/"+tx.hash;l.target="_blank";l.rel="noopener";l.textContent="View transaction";el.appendChild(l);
+    say(el,"ok");$("amtA").value="";S.q=null;await balances();
+  }catch(e){say(e.shortMessage||e.reason||e.message||"Swap failed","err")}
+  S.busy=false;render();
+}
+$("conn").onclick=connect;
+$("go").onclick=onGo;
+$("amtA").oninput=requote;
+$("flip").onclick=()=>{[S.from,S.to]=[S.to,S.from];$("amtA").value="";requote();render()};
+$("max").onclick=()=>{const b=S.bal[S.from];if(b!=null){$("amtA").value=ethers.formatUnits(b,T[S.from].d);requote()}};
+$("slip").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.bps=+b.dataset.b;[...$("slip").children].forEach(x=>x.setAttribute("aria-pressed",x===b));render()};
+render();
+if(window.ethereum&&window.ethereum.selectedAddress){connect()}
+</script>
+</body>
+</html>
