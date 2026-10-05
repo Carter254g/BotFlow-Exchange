@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BotFlow Exchange | Token Swap on BOT Chain</title>
+<meta name="description" content="Swap BOT, WBOT, USDT and other BOT Chain tokens through the BDEX V3 router.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
 <style>
-:root{--bg:#e9eef8;--card:#fff;--fg:#0f1530;--mut:#5d6684;--bd:#d5dcee;--ac:#2f5bff;--acfg:#fff;--in:#f1f4fb;--err:#c62828;--ok:#1b7f4b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a}}
-:root[data-theme="dark"]{--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a}
+:root{--bg:#e9eef8;--card:#fff;--fg:#0f1530;--mut:#5d6684;--bd:#d5dcee;--ac:#2f5bff;--acfg:#fff;--in:#f1f4fb;--err:#c62828;--ok:#1b7f4b;--warn:#b26a00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a;--warn:#ffb547}}
+:root[data-theme="dark"]{--bg:#080c1c;--card:#111832;--fg:#e8ecff;--mut:#8f9ac0;--bd:#252f57;--ac:#5c82ff;--acfg:#06102e;--in:#0b1127;--err:#ff7a7a;--ok:#5fd59a;--warn:#ffb547}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center;padding:20px 14px}
 main{width:100%;max-width:440px}
 header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
 h1{font-size:1.35rem;margin:0;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1rem;margin:0;font-weight:700}
 button{font:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .pill{background:var(--card);border:1px solid var(--bd);color:var(--fg);border-radius:999px;padding:7px 13px;font-size:.85rem}
@@ -24,20 +26,41 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .lbl{font-size:.8rem;color:var(--mut)}
 .amt{width:100%;min-width:0;border:0;background:transparent;color:var(--fg);font:inherit;font-size:1.7rem;font-weight:500;padding:6px 0;outline-offset:4px}
 .amt::placeholder{color:var(--mut)}
-.tok{font-weight:700;font-size:1.05rem;background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:7px 14px;white-space:nowrap}
+.tok{font-weight:700;font-size:1.05rem;background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:999px;padding:7px 12px 7px 14px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tok::after{content:"";width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--mut)}
 .max{background:none;border:0;color:var(--ac);font-size:.8rem;font-weight:700;padding:0 0 0 6px}
 .flip{display:block;margin:-12px auto;position:relative;z-index:1;width:38px;height:38px;border-radius:12px;border:3px solid var(--card);background:var(--ac);color:var(--acfg);font-size:1.1rem}
 .go{width:100%;margin-top:10px;padding:16px;border:0;border-radius:14px;background:var(--ac);color:var(--acfg);font-size:1.05rem;font-weight:700}
 .go:disabled{opacity:.45;cursor:not-allowed}
+.go.danger{background:var(--err)}
 .info{margin:12px 4px 0;font-size:.85rem;color:var(--mut);display:grid;gap:5px}
-.info div{display:flex;justify-content:space-between;gap:10px}
+.info>div{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.info .v{color:var(--fg);text-align:right}
+.v.warn{color:var(--warn)}.v.bad{color:var(--err);font-weight:700}
 .slip{display:flex;gap:6px}
 .slip button{background:var(--in);border:1px solid var(--bd);color:var(--fg);border-radius:8px;padding:3px 9px;font-size:.8rem}
 .slip button[aria-pressed="true"]{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
 #msg{margin:12px 4px 0;font-size:.88rem;min-height:1.2em;word-break:break-word}
 #msg.err{color:var(--err)}#msg.ok{color:var(--ok)}
-#msg a{color:inherit}
+#msg a,#hist a,dialog a{color:inherit}
+#hist{margin-top:18px}
+#hist ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+#hist li{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;font-size:.85rem;display:grid;gap:2px}
+#hist .lbl a{color:var(--ac)}
 footer{margin:18px 4px 0;font-size:.75rem;color:var(--mut);line-height:1.5}
+dialog{border:1px solid var(--bd);border-radius:20px;background:var(--card);color:var(--fg);width:min(420px,calc(100% - 28px));padding:16px;max-height:82vh}
+dialog::backdrop{background:rgba(5,8,20,.55)}
+.x{background:var(--in);border:0;color:var(--fg);border-radius:10px;width:32px;height:32px}
+#pickQ{width:100%;margin:12px 0 8px;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--in);color:var(--fg);font:inherit;font-size:.92rem}
+#pickL{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:46vh;overflow:auto}
+#pickL li{display:flex;align-items:center;gap:6px}
+.opt{flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px;background:none;border:0;color:var(--fg);padding:9px 8px;border-radius:10px;text-align:left}
+.opt:hover,.opt[aria-current="true"]{background:var(--in)}
+.opt b{display:block;font-size:.98rem}
+.opt small{color:var(--mut);font-size:.75rem}
+.rm{background:none;border:0;color:var(--mut);font-size:.75rem;padding:4px 6px}
+.imp{margin-top:8px;padding:12px;border:1px solid var(--warn);border-radius:12px;font-size:.82rem;display:grid;gap:8px}
+.imp button{padding:10px;border:0;border-radius:10px;background:var(--ac);color:var(--acfg);font-weight:700}
 </style>
 </head>
 <body>
@@ -49,39 +72,74 @@ footer{margin:18px 4px 0;font-size:.75rem;color:var(--mut);line-height:1.5}
   <div class="card">
     <div class="box">
       <div class="row"><span class="lbl">You pay</span><span class="lbl">Balance: <span id="balA">–</span><button class="max" id="max">Max</button></span></div>
-      <div class="row"><input class="amt" id="amtA" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay"><span class="tok" id="symA">WBOT</span></div>
+      <div class="row"><input class="amt" id="amtA" inputmode="decimal" placeholder="0.0" autocomplete="off" aria-label="Amount to pay"><button class="tok" id="symA" aria-label="Choose token to pay">WBOT</button></div>
     </div>
     <button class="flip" id="flip" aria-label="Swap direction">⇅</button>
     <div class="box">
       <div class="row"><span class="lbl">You receive (estimate)</span><span class="lbl">Balance: <span id="balB">–</span></span></div>
-      <div class="row"><input class="amt" id="amtB" placeholder="0.0" readonly aria-label="Amount to receive"><span class="tok" id="symB">USDT</span></div>
+      <div class="row"><input class="amt" id="amtB" placeholder="0.0" readonly aria-label="Amount to receive"><button class="tok" id="symB" aria-label="Choose token to receive">USDT</button></div>
     </div>
     <button class="go" id="go" disabled>Connect wallet</button>
   </div>
   <div class="info">
+    <div><span>Rate</span><span class="v" id="rate">–</span></div>
+    <div><span>Price impact</span><span class="v" id="impact">–</span></div>
     <div><span>Max slippage</span><span class="slip" id="slip"><button data-b="50" aria-pressed="true">0.5%</button><button data-b="100" aria-pressed="false">1%</button><button data-b="300" aria-pressed="false">3%</button></span></div>
-    <div><span>Minimum received</span><span id="minOut">–</span></div>
-    <div><span>Pool fee tier</span><span id="feeT">–</span></div>
+    <div><span>Minimum received</span><span class="v" id="minOut">–</span></div>
+    <div><span>Pool fee tier</span><span class="v" id="feeT">–</span></div>
+    <div><span title="Exact amount asks for approval on every swap. Unlimited asks once per token, but lets the router spend any amount of it.">Token approval</span><span class="slip" id="apv"><button data-v="exact" aria-pressed="true">Exact amount</button><button data-v="max" aria-pressed="false">Unlimited</button></span></div>
   </div>
   <div id="msg" role="status"></div>
-  <footer>Swaps run through the BDEX V3 router on BOT Chain (chain ID 677). Quotes and transactions go through your wallet. Check the amounts in your wallet before you confirm. BotFlow Exchange is an independent interface and is not affiliated with BOT Chain.</footer>
+  <section id="hist" hidden>
+    <div class="row"><h2>Recent activity</h2><button class="max" id="histClr">Clear</button></div>
+    <ul id="histL"></ul>
+  </section>
+  <footer>Swaps run through the BDEX V3 router on BOT Chain (chain ID 677). Quotes and transactions go through your wallet. Check the amounts in your wallet before you confirm. Recent activity and imported tokens are saved only in this browser. BotFlow Exchange is an independent interface and is not affiliated with BOT Chain.</footer>
 </main>
+
+<dialog id="pick" aria-labelledby="pickT">
+  <div class="row"><h2 id="pickT">Select a token</h2><button class="x" id="pickX" aria-label="Close">✕</button></div>
+  <input id="pickQ" placeholder="Search by name or paste an address" autocomplete="off" spellcheck="false" aria-label="Search tokens">
+  <ul id="pickL"></ul>
+  <div id="pickM"></div>
+</dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
 <script>
 const CHAIN={id:677,hex:"0x2a5",name:"BOT Chain",rpc:"https://rpc.botchain.ai",scan:"https://scan.botchain.ai"};
 const ADDR={router:"0x07032d47A1b9f8460cBeE9dC17c1d3E438693929",quoter:"0x034A705b36067cff99ABf5C662Be881cBd8d0176"};
-const T={WBOT:{a:"0xD5452816194a3784dBa983426cCe7c122F4abd30",d:18},USDT:{a:"0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C",d:6}};
-const ERC20=["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
+const WBOT="0xD5452816194a3784dBa983426cCe7c122F4abd30",USDT="0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C";
+const WK=WBOT.toLowerCase(),UK=USDT.toLowerCase();
+const ERC20=["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function symbol() view returns (string)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
+const WABI=[...ERC20,"function deposit() payable","function withdraw(uint256)"];
 const QABI=["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"];
 const RABI=["function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256 amountOut)"];
 const FEES=[3000,500,10000,100];
+const GAS_RESERVE=ethers.parseEther("0.01");
 const $=id=>document.getElementById(id);
-let S={from:"WBOT",to:"USDT",acct:null,prov:null,signer:null,onChain:false,bal:{},q:null,bps:50,busy:false,qid:0,timer:null};
 
-function say(t,c){const m=$("msg");m.className=c||"";m.innerHTML="";if(typeof t==="string")m.textContent=t;else m.appendChild(t)}
-function fmt(v,d){const s=ethers.formatUnits(v,d);const [i,f=""]=s.split(".");return f.replace(/0+$/,"").slice(0,6)?i+"."+f.replace(/0+$/,"").slice(0,6):i}
+// Small localStorage wrapper that never throws
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+// Token registry. Key "BOT" is the native coin, every other key is a lowercase address.
+const TK={BOT:{sym:"BOT",d:18,native:true},[WK]:{sym:"WBOT",a:WBOT,d:18},[UK]:{sym:"USDT",a:USDT,d:6}};
+for(const c of LS.get("bfx:tokens",[])){
+  if(c&&typeof c.a==="string"&&ethers.isAddress(c.a)){const k=c.a.toLowerCase();if(!TK[k])TK[k]={sym:cleanSym(c.sym),a:ethers.getAddress(c.a),d:Number(c.d)||18,custom:true}}
+}
+let S={from:WK,to:UK,acct:null,prov:null,signer:null,ro:null,onChain:false,bal:{},q:null,bps:50,approve:LS.get("bfx:approve","exact")==="max"?"max":"exact",busy:false,qid:0,timer:null,side:null};
+
+function cleanSym(s){s=String(s||"").replace(/[^\w.\-+$]/g,"").slice(0,12);return s||"TOKEN"}
+function el(tag,props,...kids){const e=document.createElement(tag);if(props)for(const[k,v]of Object.entries(props)){if(k==="on")for(const[ev,f]of Object.entries(v))e.addEventListener(ev,f);else if(k in e)e[k]=v;else e.setAttribute(k,v)}for(const c of kids)if(c!=null)e.append(c);return e}
+function say(t,c){const m=$("msg");m.className=c||"";m.replaceChildren(typeof t==="string"?document.createTextNode(t):t)}
+function fmt(v,d){const s=ethers.formatUnits(v,d);const[i,f=""]=s.split(".");const g=f.replace(/0+$/,"").slice(0,6);return g?i+"."+g:i}
 function short(a){return a.slice(0,6)+"…"+a.slice(-4)}
-function amountIn(){const v=$("amtA").value.trim();if(!v||isNaN(v)||+v<=0)return null;try{return ethers.parseUnits(v,T[S.from].d)}catch(e){return null}}
+function pct(bps){return bps<1?"<0.01%":(bps/100).toFixed(2)+"%"}
+function txLink(h,t){return el("a",{href:CHAIN.scan+"/tx/"+h,target:"_blank",rel:"noopener",textContent:t||"View transaction"})}
+function under(k){return TK[k].native?WK:k}
+function kind(){if(S.from===S.to)return null;const f=under(S.from),t=under(S.to);if(f===t)return TK[S.from].native?"wrap":"unwrap";return "swap"}
+function amountIn(){const v=$("amtA").value.trim();if(!v||isNaN(v)||+v<=0)return null;try{return ethers.parseUnits(v,TK[S.from].d)}catch(e){return null}}
+function readProv(){if(S.onChain&&S.prov)return S.prov;return S.ro||(S.ro=new ethers.JsonRpcProvider(CHAIN.rpc,CHAIN.id,{staticNetwork:true}))}
+function errText(e){if(e&&(e.code==="ACTION_REJECTED"||e.code===4001))return "You rejected the request in your wallet.";return (e&&(e.shortMessage||e.reason||e.message))||"Transaction failed"}
 
 async function connect(){
   if(!window.ethereum){say("No wallet found. Install MetaMask, OKX, Bitget or TokenPocket, or open this page in a wallet browser.","err");return}
@@ -90,10 +148,9 @@ async function connect(){
     await S.prov.send("eth_requestAccounts",[]);
     S.signer=await S.prov.getSigner();S.acct=await S.signer.getAddress();
     await checkChain();
-    window.ethereum.on&&window.ethereum.on("chainChanged",()=>location.reload());
-    window.ethereum.on&&window.ethereum.on("accountsChanged",()=>location.reload());
-  }catch(e){say(e.shortMessage||e.message||"Connection cancelled","err")}
-  render();
+    if(window.ethereum.on){window.ethereum.on("chainChanged",()=>location.reload());window.ethereum.on("accountsChanged",()=>location.reload())}
+  }catch(e){say(errText(e),"err")}
+  render();renderHist();
 }
 async function checkChain(){
   const net=await S.prov.getNetwork();S.onChain=Number(net.chainId)===CHAIN.id;
@@ -109,74 +166,179 @@ async function switchChain(){
   location.reload();
 }
 async function loadDecimals(){
-  try{T.USDT.d=Number(await new ethers.Contract(T.USDT.a,ERC20,S.prov).decimals())}catch(e){}
+  try{TK[UK].d=Number(await new ethers.Contract(USDT,ERC20,readProv()).decimals())}catch(e){}
 }
 async function balances(){
-  for(const k of ["WBOT","USDT"]){
-    try{S.bal[k]=await new ethers.Contract(T[k].a,ERC20,S.prov).balanceOf(S.acct)}catch(e){S.bal[k]=null}
-  }
+  if(!S.acct||!S.onChain)return;
+  const p=readProv();
+  await Promise.all(Object.keys(TK).map(async k=>{
+    try{S.bal[k]=TK[k].native?await p.getBalance(S.acct):await new ethers.Contract(TK[k].a,ERC20,p).balanceOf(S.acct)}catch(e){S.bal[k]=null}
+  }));
   render();
 }
+
 function render(){
-  $("symA").textContent=S.from;$("symB").textContent=S.to;
+  const F=TK[S.from],O=TK[S.to],k=kind(),a=amountIn();
+  $("symA").textContent=F.sym;$("symB").textContent=O.sym;
   const bA=S.bal[S.from],bB=S.bal[S.to];
-  $("balA").textContent=bA==null?"–":fmt(bA,T[S.from].d);
-  $("balB").textContent=bB==null?"–":fmt(bB,T[S.to].d);
+  $("balA").textContent=bA==null?"–":fmt(bA,F.d);
+  $("balB").textContent=bB==null?"–":fmt(bB,O.d);
   $("conn").textContent=S.acct?short(S.acct):"Connect wallet";
-  const g=$("go"),a=amountIn();let txt,dis=true;
+
+  // Quote details
+  const R=$("rate"),I=$("impact"),M=$("minOut"),FT=$("feeT");I.className="v";
+  if((k==="wrap"||k==="unwrap")&&a){
+    $("amtB").value=$("amtA").value.trim();R.textContent="1 "+F.sym+" = 1 "+O.sym;I.textContent="0%";M.textContent=fmt(a,O.d)+" "+O.sym;FT.textContent="None (1:1 wrap)";
+  }else if(k==="swap"&&a&&S.q&&!S.q.none){
+    $("amtB").value=fmt(S.q.out,O.d);
+    const rate=S.q.out*(10n**BigInt(F.d))/a;R.textContent="1 "+F.sym+" ≈ "+fmt(rate,O.d)+" "+O.sym;
+    if(S.q.impact==null)I.textContent="–";else{I.textContent=pct(S.q.impact);if(S.q.impact>=1500)I.className="v bad";else if(S.q.impact>=300)I.className="v warn"}
+    M.textContent=fmt(S.q.out*BigInt(10000-S.bps)/10000n,O.d)+" "+O.sym;
+    FT.textContent=(S.q.fee/10000)+"%";
+  }else{$("amtB").value="";R.textContent=I.textContent=M.textContent=FT.textContent="–"}
+
+  // Main button
+  const g=$("go");let txt,dis=true,danger=false;
   if(!S.acct)txt="Connect wallet",dis=false;
   else if(!S.onChain)txt="Switch to BOT Chain",dis=false;
   else if(S.busy)txt="Waiting for wallet…";
+  else if(!k)txt="Choose two different tokens";
   else if(!a)txt="Enter an amount";
-  else if(bA!=null&&a>bA)txt="Insufficient "+S.from;
+  else if(bA!=null&&a>bA)txt="Insufficient "+F.sym;
+  else if(k==="wrap")txt="Wrap BOT",dis=false;
+  else if(k==="unwrap")txt="Unwrap WBOT",dis=false;
   else if(!S.q)txt="Finding best price…";
   else if(S.q.none)txt="No liquidity for this pair";
+  else if(S.q.impact>=1500)txt="Swap anyway",dis=false,danger=true;
   else txt="Swap",dis=false;
-  g.textContent=txt;g.disabled=dis;
-  if(S.q&&!S.q.none){$("amtB").value=fmt(S.q.out,T[S.to].d);const mo=S.q.out*BigInt(10000-S.bps)/10000n;$("minOut").textContent=fmt(mo,T[S.to].d)+" "+S.to;$("feeT").textContent=(S.q.fee/10000)+"%"}
-  else{$("amtB").value="";$("minOut").textContent="–";$("feeT").textContent="–"}
+  g.textContent=txt;g.disabled=dis;g.classList.toggle("danger",danger);
 }
+
 function requote(){
-  S.q=null;render();clearTimeout(S.timer);
-  const a=amountIn();if(!a||!S.onChain)return;
-  const id=++S.qid;
+  S.q=null;clearTimeout(S.timer);render();
+  const a=amountIn();if(!a||kind()!=="swap")return;
+  const id=++S.qid,tin=TK[under(S.from)].a,tout=TK[under(S.to)].a;
   S.timer=setTimeout(async()=>{
-    const qc=new ethers.Contract(ADDR.quoter,QABI,S.prov);let best=null;
+    const qc=new ethers.Contract(ADDR.quoter,QABI,readProv());let best=null;
     await Promise.all(FEES.map(async fee=>{
-      try{const r=await qc.quoteExactInputSingle.staticCall({tokenIn:T[S.from].a,tokenOut:T[S.to].a,amountIn:a,fee,sqrtPriceLimitX96:0});
+      try{const r=await qc.quoteExactInputSingle.staticCall({tokenIn:tin,tokenOut:tout,amountIn:a,fee,sqrtPriceLimitX96:0});
         if(r[0]>0n&&(!best||r[0]>best.out))best={out:r[0],fee}}catch(e){}
     }));
+    // Price impact: compare against the rate for a trade 1/1000th the size in the same pool
+    if(best){
+      const ref=a/1000n>0n?a/1000n:1n;
+      try{const r=await qc.quoteExactInputSingle.staticCall({tokenIn:tin,tokenOut:tout,amountIn:ref,fee:best.fee,sqrtPriceLimitX96:0});
+        if(r[0]>0n){const b=10000n-best.out*ref*10000n/(a*r[0]);best.impact=Number(b<0n?0n:b)}}catch(e){}
+    }
     if(id!==S.qid)return;
     S.q=best||{none:true};render();
   },350);
 }
+
 async function onGo(){
   if(!S.acct)return connect();
-  if(!S.onChain){try{await switchChain()}catch(e){say(e.shortMessage||e.message,"err")}return}
-  const a=amountIn();if(!a||!S.q||S.q.none)return;
+  if(!S.onChain){try{await switchChain()}catch(e){say(errText(e),"err")}return}
+  const a=amountIn(),k=kind();if(!a||!k)return;
+  if(k==="swap"&&(!S.q||S.q.none))return;
+  if(k==="swap"&&S.q.impact>=1500&&!confirm("Price impact is "+pct(S.q.impact)+". You would get much less than the market rate. Swap anyway?"))return;
+  const F=TK[S.from],O=TK[S.to],inTxt=fmt(a,F.d);
   S.busy=true;render();
   try{
-    const tin=new ethers.Contract(T[S.from].a,ERC20,S.signer);
-    const al=await tin.allowance(S.acct,ADDR.router);
-    if(al<a){say("Approve "+S.from+" in your wallet (1 of 2)…");const ap=await tin.approve(ADDR.router,a);await ap.wait()}
-    say("Confirm the swap in your wallet…");
-    const minOut=S.q.out*BigInt(10000-S.bps)/10000n;
-    const r=new ethers.Contract(ADDR.router,RABI,S.signer);
-    const tx=await r.exactInputSingle({tokenIn:T[S.from].a,tokenOut:T[S.to].a,fee:S.q.fee,recipient:S.acct,deadline:Math.floor(Date.now()/1000)+1200,amountIn:a,amountOutMinimum:minOut,sqrtPriceLimitX96:0});
-    say("Swap submitted. Waiting for confirmation…");
-    await tx.wait();
-    const el=document.createElement("span");el.textContent="Swapped. ";
-    const l=document.createElement("a");l.href=CHAIN.scan+"/tx/"+tx.hash;l.target="_blank";l.rel="noopener";l.textContent="View transaction";el.appendChild(l);
-    say(el,"ok");$("amtA").value="";S.q=null;await balances();
-  }catch(e){say(e.shortMessage||e.reason||e.message||"Swap failed","err")}
+    const w=new ethers.Contract(WBOT,WABI,S.signer);
+    let hash,got;
+    if(k==="wrap"){
+      say("Confirm wrapping BOT in your wallet…");const tx=await w.deposit({value:a});say("Wrap submitted. Waiting for confirmation…");await tx.wait();hash=tx.hash;got=a;
+    }else if(k==="unwrap"){
+      say("Confirm unwrapping WBOT in your wallet…");const tx=await w.withdraw(a);say("Unwrap submitted. Waiting for confirmation…");await tx.wait();hash=tx.hash;got=a;
+    }else{
+      const inK=under(S.from),outK=under(S.to),inA=TK[inK].a,outA=TK[outK].a;
+      const tin=new ethers.Contract(inA,ERC20,S.signer),tout=new ethers.Contract(outA,ERC20,S.prov);
+      const needAp=(await tin.allowance(S.acct,ADDR.router))<a;
+      const total=1+(F.native?1:0)+(needAp?1:0)+(O.native?1:0);let n=0;
+      const step=t=>say(t+" in your wallet ("+(++n)+" of "+total+")…");
+      if(F.native){step("Confirm wrapping BOT");const t=await w.deposit({value:a});await t.wait()}
+      if(needAp){step("Approve "+TK[inK].sym);const t=await tin.approve(ADDR.router,S.approve==="max"?ethers.MaxUint256:a);await t.wait()}
+      const before=await tout.balanceOf(S.acct);
+      step("Confirm the swap");
+      const r=new ethers.Contract(ADDR.router,RABI,S.signer);
+      const tx=await r.exactInputSingle({tokenIn:inA,tokenOut:outA,fee:S.q.fee,recipient:S.acct,deadline:Math.floor(Date.now()/1000)+1200,amountIn:a,amountOutMinimum:S.q.out*BigInt(10000-S.bps)/10000n,sqrtPriceLimitX96:0});
+      say("Swap submitted. Waiting for confirmation…");await tx.wait();hash=tx.hash;
+      got=(await tout.balanceOf(S.acct))-before;if(got<0n)got=0n;
+      if(O.native&&got>0n){step("Confirm unwrapping WBOT");const t=await w.withdraw(got);await t.wait()}
+    }
+    const verb=k==="wrap"?"Wrapped":k==="unwrap"?"Unwrapped":"Swapped";
+    logTx({t:Date.now(),h:hash,verb,i:inTxt+" "+F.sym,o:fmt(got,O.d)+" "+O.sym});
+    say(el("span",null,verb+" "+inTxt+" "+F.sym+" for "+fmt(got,O.d)+" "+O.sym+". ",txLink(hash)),"ok");
+    $("amtA").value="";S.q=null;await balances();
+  }catch(e){say(errText(e),"err");balances()}
   S.busy=false;render();
 }
+
+// Recent activity, stored per account in this browser only
+function histKey(){return "bfx:tx:"+(S.acct||"").toLowerCase()}
+function logTx(x){const l=LS.get(histKey(),[]);l.unshift(x);LS.set(histKey(),l.slice(0,10));renderHist()}
+function renderHist(){
+  const l=S.acct?LS.get(histKey(),[]):[];
+  $("hist").hidden=!l.length;
+  $("histL").replaceChildren(...l.map(x=>el("li",null,
+    el("span",{textContent:x.verb+" "+x.i+" for "+x.o}),
+    el("span",{className:"lbl"},new Date(x.t).toLocaleString()+" ",txLink(x.h,"View"))
+  )));
+}
+
+// Token picker
+function openPick(side){S.side=side;$("pickQ").value="";renderPick();$("pick").showModal();$("pickQ").focus()}
+function choose(k){
+  if(S.side==="A"){if(k===S.to)S.to=S.from;S.from=k}else{if(k===S.from)S.from=S.to;S.to=k}
+  $("pick").close();requote();
+}
+function saveCustom(){LS.set("bfx:tokens",Object.values(TK).filter(t=>t.custom).map(t=>({a:t.a,sym:t.sym,d:t.d})))}
+function renderPick(){
+  const q=$("pickQ").value.trim().toLowerCase(),cur=S.side==="A"?S.from:S.to;
+  const keys=Object.keys(TK).filter(k=>!q||TK[k].sym.toLowerCase().includes(q)||k===q);
+  $("pickL").replaceChildren(...keys.map(k=>{
+    const t=TK[k],b=S.bal[k];
+    const li=el("li",null,el("button",{className:"opt","aria-current":String(k===cur),on:{click:()=>choose(k)}},
+      el("span",null,el("b",{textContent:t.sym}),el("small",{textContent:t.native?"Native coin":(t.custom?"Imported · ":"")+short(t.a)})),
+      el("span",{className:"lbl",textContent:b==null?"":fmt(b,t.d)})));
+    if(t.custom)li.append(el("button",{className:"rm",textContent:"Remove","aria-label":"Remove "+t.sym,on:{click:()=>{
+      if(S.from===k)S.from=WK;if(S.to===k)S.to=UK;if(S.from===S.to)S.to=S.from===UK?WK:UK;
+      delete TK[k];delete S.bal[k];saveCustom();renderPick();requote()}}}));
+    return li;
+  }));
+  const m=$("pickM");m.replaceChildren();
+  if(ethers.isAddress(q)&&!TK[q]){
+    m.append(el("div",{className:"imp"},
+      el("span",null,"This token isn't on the list. Anyone can create a token with any name, so check the address on the ",el("a",{href:CHAIN.scan+"/address/"+q,target:"_blank",rel:"noopener",textContent:"BOT Chain explorer"})," before you trade it."),
+      el("button",{textContent:"Import token",on:{click:()=>importTok(q)}})));
+  }else if(!keys.length)m.append(el("p",{className:"lbl",textContent:"No match. Paste the token's contract address to import it."}));
+}
+async function importTok(addr){
+  const m=$("pickM");m.replaceChildren(el("p",{className:"lbl",textContent:"Reading token from BOT Chain…"}));
+  try{
+    const c=new ethers.Contract(addr,ERC20,readProv());
+    const[sym,d]=await Promise.all([c.symbol(),c.decimals()]);
+    if(Number(d)>36)throw new Error("bad decimals");
+    const k=addr.toLowerCase();TK[k]={sym:cleanSym(sym),a:ethers.getAddress(addr),d:Number(d),custom:true};
+    saveCustom();choose(k);balances();
+  }catch(e){m.replaceChildren(el("p",{className:"lbl",textContent:"No token contract found at this address on BOT Chain."}))}
+}
+
 $("conn").onclick=connect;
 $("go").onclick=onGo;
 $("amtA").oninput=requote;
-$("flip").onclick=()=>{[S.from,S.to]=[S.to,S.from];$("amtA").value="";requote();render()};
-$("max").onclick=()=>{const b=S.bal[S.from];if(b!=null){$("amtA").value=ethers.formatUnits(b,T[S.from].d);requote()}};
+$("symA").onclick=()=>openPick("A");
+$("symB").onclick=()=>openPick("B");
+$("pickX").onclick=()=>$("pick").close();
+$("pickQ").oninput=renderPick;
+$("pick").addEventListener("click",e=>{if(e.target===$("pick"))$("pick").close()});
+$("flip").onclick=()=>{[S.from,S.to]=[S.to,S.from];$("amtA").value="";requote()};
+$("max").onclick=()=>{let b=S.bal[S.from];if(b==null)return;if(TK[S.from].native)b=b>GAS_RESERVE?b-GAS_RESERVE:0n;$("amtA").value=ethers.formatUnits(b,TK[S.from].d);requote()};
 $("slip").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.bps=+b.dataset.b;[...$("slip").children].forEach(x=>x.setAttribute("aria-pressed",x===b));render()};
+function setApv(v){S.approve=v;LS.set("bfx:approve",v);[...$("apv").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===v))}
+$("apv").onclick=e=>{const b=e.target.closest("button");if(b)setApv(b.dataset.v)};
+$("histClr").onclick=()=>{LS.set(histKey(),[]);renderHist()};
+setApv(S.approve);
 render();
 if(window.ethereum&&window.ethereum.selectedAddress){connect()}
 </script>
