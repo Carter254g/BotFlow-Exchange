@@ -1,6 +1,6 @@
 # BotFlow Exchange
 
-BotFlow Exchange is an open source swap app for BOT Chain (chain ID 677). It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
+BotFlow Exchange is an open source swap app for BOT Chain. It currently runs on **BOT Chain Testnet (chain ID 968)**. It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
 
 **Website:** https://carter254g.github.io/BotFlow-Exchange/  
 **Swap app:** https://carter254g.github.io/BotFlow-Exchange/app/
@@ -35,7 +35,7 @@ New users on BOT Chain often hold native BOT but find that DEX pools trade WBOT,
 - **Shareable swap links.** `/app/?from=BOT&to=USDT&amount=10` opens the page with that swap filled in, so communities and projects can link straight to a trade. Unknown token addresses in a link are never imported automatically.
 - **Add token to wallet** after a swap.
 - **Recent activity** for each wallet with explorer links. Pending transactions are tracked even if the page is closed, and their result is checked the next time the wallet connects.
-- **Wallet and network handling.** Works with MetaMask, OKX, Bitget, TokenPocket and other EVM wallets. Switches to BOT Chain, or adds it if the wallet doesn't have it.
+- **Wallet and network handling.** Works with MetaMask, OKX, Bitget, TokenPocket and other EVM wallets. Switches to BOT Chain Testnet, or adds it if the wallet doesn't have it.
 - **Mobile first, light and dark mode.**
 
 ## How a swap works
@@ -74,33 +74,41 @@ Every transaction is signed in the user's own wallet. The page never holds keys 
 
 24 unit and fuzz tests in `test/BotFlowRouter.t.sol` cover every swap path, slippage and deadline checks, malformed paths, fee-on-transfer tokens, a reentrancy attack, fee maths and caps, pausing, ownership and rescue. Every test also checks that the contract is left holding no tokens, no BOT and no open approvals. Line coverage is about 97%.
 
-`test/fork/BotChainFork.t.sol` runs a real BOT to USDT and back trip against live BDEX pools on a fork of BOT Chain.
+`test/fork/BotChainFork.t.sol` runs a real tBOT to USDT and back trip against live BDEX pools on a fork of BOT Chain Testnet.
 
 ```
 forge install            # fetch forge-std and OpenZeppelin (git submodules)
 forge test               # unit and fuzz tests
-BOT_RPC_URL=https://rpc.botchain.ai forge test --match-path "test/fork/*"
+BOT_RPC_URL=https://rpc.bohr.life forge test --match-path "test/fork/*"
 ```
 
 ### Deploy
 
 ```
-OWNER=0xYourMultisig forge script script/Deploy.s.sol --rpc-url botchain --broadcast --account deployer
+OWNER=0xYourMultisig forge script script/Deploy.s.sol --rpc-url botchain_testnet --broadcast --account deployer
 ```
 
-The script refuses to run on any chain other than BOT Chain and checks that the BDEX router and WBOT exist before deploying. Use a multisig as `OWNER`.
+The script deploys to BOT Chain Testnet (use `--rpc-url botchain` for mainnet later), refuses to run on any other chain, and checks that the BDEX router and WBOT exist before deploying. Use a multisig as `OWNER`.
 
-## Contracts
+## Network and contracts (BOT Chain Testnet)
+
+| | |
+| --- | --- |
+| Chain ID | 968 (`0x3c8`) |
+| RPC | `https://rpc.bohr.life` |
+| Explorer | https://scan.bohr.life |
+| Native coin | tBOT (18 decimals) |
+| Faucet | https://faucet.botchain.ai/basic (10 tBOT and 1000 test USDT per day) |
 
 | Contract | Address |
 | --- | --- |
 | BotFlowRouter | Not deployed yet |
 | BDEX V3 SwapRouter | `0x07032d47A1b9f8460cBeE9dC17c1d3E438693929` |
-| BDEX V3 Quoter | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` |
+| BDEX V3 QuoterV2 | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` |
 | WBOT | `0xD5452816194a3784dBa983426cCe7c122F4abd30` |
-| USDT | `0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C` |
+| USDT (test) | `0x75edC9335175Fc0552D51D48439F229c10420fe3` |
 
-Network: BOT Chain, chain ID 677, RPC `https://rpc.botchain.ai`, explorer https://scan.botchain.ai
+The BDEX V3 contracts and WBOT use the same addresses on mainnet (chain 677). Only USDT differs: mainnet USDT is `0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C`. Moving to mainnet later means changing the `CHAIN` settings and the USDT address in `app/app.js` and `assets/landing.js`.
 
 ## Run the web app
 
@@ -156,4 +164,4 @@ MIT. See [LICENSE](LICENSE).
 
 ## Notice
 
-BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Verify contract addresses on https://scan.botchain.ai before use.
+BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Verify contract addresses on https://scan.bohr.life before use.

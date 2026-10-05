@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BotFlow Exchange | Swap on BOT Chain</title>
+<title>BotFlow Exchange | Swap on BOT Chain Testnet</title>
 <meta name="description" content="BotFlow is an open source swap app for BOT Chain. Trade BOT, WBOT, USDT and any BOT Chain token through BDEX V3 liquidity, with native BOT support and price checks before you sign.">
 <meta property="og:title" content="BotFlow Exchange | Swap on BOT Chain">
 <meta property="og:description" content="Trade any BOT Chain token through BDEX V3 liquidity. Native BOT in and out, smart routing, and no BotFlow fee.">
@@ -21,6 +21,7 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="testnet-bar">BotFlow is live on <b>BOT Chain Testnet</b>. Test tokens have no real value. <a href="https://faucet.botchain.ai/basic" target="_blank" rel="noopener">Get free test tokens</a></div>
 
 <header class="nav">
   <div class="wrap nav-in">
@@ -61,7 +62,7 @@
           <span class="live" id="liveTag"><i></i><span id="liveTxt">Fetching live quote</span></span>
         </div>
         <div class="route-amts">
-          <div><span class="lbl">You pay</span><b class="num">100 BOT</b></div>
+          <div><span class="lbl">You pay</span><b class="num">100 tBOT</b></div>
           <div class="ta-r"><span class="lbl">You receive</span><b class="num" id="qOut">…</b></div>
         </div>
         <div class="flow" aria-hidden="true">
@@ -69,7 +70,7 @@
             <path class="flow-bg" d="M30 60 C 110 60, 110 30, 200 30 S 290 60, 370 60"/>
             <path class="flow-line" d="M30 60 C 110 60, 110 30, 200 30 S 290 60, 370 60" pathLength="1"/>
           </svg>
-          <span class="node n1">BOT</span>
+          <span class="node n1">tBOT</span>
           <span class="node n2">WBOT</span>
           <span class="node n3">USDT</span>
           <span class="hop h1">wrap 1:1</span>
@@ -80,7 +81,7 @@
           <li>Price re-checked before signing</li>
           <li>Swap simulated, so a failing trade costs no gas</li>
         </ul>
-        <figcaption id="routeCap" class="lbl">Live from the BDEX V3 Quoter on BOT Chain. Prices move, so the app always shows the current quote.</figcaption>
+        <figcaption id="routeCap" class="lbl">Live from the BDEX V3 Quoter on BOT Chain Testnet. Prices move, so the app always shows the current quote.</figcaption>
       </figure>
     </div>
   </section>
@@ -176,16 +177,16 @@
   </section>
 
   <section class="contracts wrap" aria-labelledby="addrT">
-    <h2 id="addrT">Contracts on BOT Chain</h2>
-    <p class="sub">Always check addresses on the explorer before you trade.</p>
+    <h2 id="addrT">Contracts on BOT Chain Testnet</h2>
+    <p class="sub">Chain ID 968, RPC <code>https://rpc.bohr.life</code>. Always check addresses on the explorer before you trade.</p>
     <div class="table">
       <table>
         <thead><tr><th scope="col">Contract</th><th scope="col">Address</th></tr></thead>
         <tbody>
-          <tr><td>BDEX V3 SwapRouter</td><td><a class="addr" href="https://scan.botchain.ai/address/0x07032d47A1b9f8460cBeE9dC17c1d3E438693929" target="_blank" rel="noopener">0x07032d47A1b9f8460cBeE9dC17c1d3E438693929</a></td></tr>
-          <tr><td>BDEX V3 Quoter</td><td><a class="addr" href="https://scan.botchain.ai/address/0x034A705b36067cff99ABf5C662Be881cBd8d0176" target="_blank" rel="noopener">0x034A705b36067cff99ABf5C662Be881cBd8d0176</a></td></tr>
-          <tr><td>WBOT</td><td><a class="addr" href="https://scan.botchain.ai/address/0xD5452816194a3784dBa983426cCe7c122F4abd30" target="_blank" rel="noopener">0xD5452816194a3784dBa983426cCe7c122F4abd30</a></td></tr>
-          <tr><td>USDT</td><td><a class="addr" href="https://scan.botchain.ai/address/0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C" target="_blank" rel="noopener">0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C</a></td></tr>
+          <tr><td>BDEX V3 SwapRouter</td><td><a class="addr" href="https://scan.bohr.life/address/0x07032d47A1b9f8460cBeE9dC17c1d3E438693929" target="_blank" rel="noopener">0x07032d47A1b9f8460cBeE9dC17c1d3E438693929</a></td></tr>
+          <tr><td>BDEX V3 Quoter</td><td><a class="addr" href="https://scan.bohr.life/address/0x034A705b36067cff99ABf5C662Be881cBd8d0176" target="_blank" rel="noopener">0x034A705b36067cff99ABf5C662Be881cBd8d0176</a></td></tr>
+          <tr><td>WBOT</td><td><a class="addr" href="https://scan.bohr.life/address/0xD5452816194a3784dBa983426cCe7c122F4abd30" target="_blank" rel="noopener">0xD5452816194a3784dBa983426cCe7c122F4abd30</a></td></tr>
+          <tr><td>USDT</td><td><a class="addr" href="https://scan.bohr.life/address/0x75edC9335175Fc0552D51D48439F229c10420fe3" target="_blank" rel="noopener">0x75edC9335175Fc0552D51D48439F229c10420fe3</a></td></tr>
           <tr><td>BotFlowRouter</td><td class="pending">Deployment coming soon</td></tr>
         </tbody>
       </table>
@@ -194,6 +195,10 @@
 
   <section class="faq wrap" id="faq" aria-labelledby="faqT">
     <h2 id="faqT">Questions</h2>
+    <details>
+      <summary>Is this real money?</summary>
+      <p>No. BotFlow currently runs on BOT Chain Testnet, where tBOT and test USDT have no value. You can get them free from the <a href="https://faucet.botchain.ai/basic" target="_blank" rel="noopener">BOT Chain faucet</a>, up to 10 tBOT and 1000 test USDT a day.</p>
+    </details>
     <details>
       <summary>Does BotFlow hold my funds?</summary>
       <p>No. Every trade is signed in your own wallet and goes straight to the BOT Chain contracts. BotFlow has no backend and never has access to your keys.</p>
@@ -204,7 +209,7 @@
     </details>
     <details>
       <summary>Which wallets work?</summary>
-      <p>Any EVM wallet, including MetaMask, OKX Wallet, Bitget Wallet and TokenPocket, on desktop or in a wallet's built-in browser. BotFlow adds BOT Chain to your wallet if it isn't there yet.</p>
+      <p>Any EVM wallet, including MetaMask, OKX Wallet, Bitget Wallet and TokenPocket, on desktop or in a wallet's built-in browser. BotFlow adds BOT Chain Testnet to your wallet if it isn't there yet.</p>
     </details>
     <details>
       <summary>Is the contract audited?</summary>
@@ -235,7 +240,8 @@
     </div>
     <ul>
       <li><a href="app/">Swap app</a></li>
-      <li><a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOT Chain explorer</a></li>
+      <li><a href="https://scan.bohr.life" target="_blank" rel="noopener">Testnet explorer</a></li>
+      <li><a href="https://faucet.botchain.ai/basic" target="_blank" rel="noopener">Testnet faucet</a></li>
       <li>MIT License</li>
     </ul>
   </div>

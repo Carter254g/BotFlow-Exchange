@@ -1,15 +1,15 @@
 /**
  * BotFlow Exchange web app.
  *
- * Talks to BOT Chain (chain ID 677) through the user's wallet and the public RPC.
+ * Talks to BOT Chain Testnet (chain ID 968) through the user's wallet and the public RPC.
  * Quotes come from the BDEX V3 Quoter; swaps go through the BDEX V3 SwapRouter.
  * Depends on ethers v6, loaded as a global from cdnjs in index.html.
  */
 "use strict";
 
-const CHAIN={id:677,hex:"0x2a5",name:"BOT Chain",rpc:"https://rpc.botchain.ai",scan:"https://scan.botchain.ai"};
+const CHAIN={id:968,hex:"0x3c8",name:"BOT Chain Testnet",rpc:"https://rpc.bohr.life",scan:"https://scan.bohr.life",faucet:"https://faucet.botchain.ai/basic",native:"tBOT"};
 const ADDR={router:"0x07032d47A1b9f8460cBeE9dC17c1d3E438693929",quoter:"0x034A705b36067cff99ABf5C662Be881cBd8d0176"};
-const WBOT="0xD5452816194a3784dBa983426cCe7c122F4abd30",USDT="0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C";
+const WBOT="0xD5452816194a3784dBa983426cCe7c122F4abd30",USDT="0x75edC9335175Fc0552D51D48439F229c10420fe3";
 const WK=WBOT.toLowerCase(),UK=USDT.toLowerCase();
 const ERC20=["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function symbol() view returns (string)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
 const WABI=[...ERC20,"function deposit() payable","function withdraw(uint256)"];
@@ -27,7 +27,7 @@ const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}
 const clamp=(v,lo,hi,d)=>Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;
 
 // Token registry. "BOT" is the native coin, every other key is a lowercase address.
-const TK={BOT:{sym:"BOT",d:18,native:true},[WK]:{sym:"WBOT",a:WBOT,d:18},[UK]:{sym:"USDT",a:USDT,d:6}};
+const TK={BOT:{sym:CHAIN.native,d:18,native:true},[WK]:{sym:"WBOT",a:WBOT,d:18},[UK]:{sym:"USDT",a:USDT,d:6}};
 for(const c of LS.get("bfx:tokens",[])){
   if(c&&typeof c.a==="string"&&ethers.isAddress(c.a)){const k=c.a.toLowerCase();if(!TK[k])TK[k]={sym:cleanSym(c.sym),a:ethers.getAddress(c.a),d:Number(c.d)||18,custom:true}}
 }
@@ -57,9 +57,9 @@ function errText(e){
   if(/Too little received/i.test(s))return "The price moved more than your slippage setting. Try again, or raise slippage in Settings.";
   if(/Transaction too old/i.test(s))return "The swap wasn't confirmed before its deadline. Try again, or allow more time in Settings.";
   if(/\bSTF\b|transfer amount exceeds/i.test(s))return "Token transfer failed. Check your balance and approval, then try again.";
-  if(/insufficient funds/i.test(s))return "Not enough BOT to pay the network fee.";
+  if(/insufficient funds/i.test(s))return "Not enough "+CHAIN.native+" to pay the network fee. Get free test tokens from the faucet: "+CHAIN.faucet;
   if(/nonce/i.test(s))return "Your wallet has another transaction waiting. Let it finish, then try again.";
-  if(/network|timeout|failed to fetch|could not detect/i.test(s))return "Couldn't reach BOT Chain. Check your connection and try again.";
+  if(/network|timeout|failed to fetch|could not detect/i.test(s))return "Couldn't reach BOT Chain Testnet. Check your connection and try again.";
   return (e&&(e.shortMessage||e.reason||e.message))||"Transaction failed";
 }
 
@@ -83,7 +83,7 @@ async function switchChain(){
   try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN.hex}]})}
   catch(e){
     if(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902)||/Unrecognized|not added/i.test(e.message||"")){
-      await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN.hex,chainName:CHAIN.name,rpcUrls:[CHAIN.rpc],nativeCurrency:{name:"BOT",symbol:"BOT",decimals:18},blockExplorerUrls:[CHAIN.scan]}]});
+      await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN.hex,chainName:CHAIN.name,rpcUrls:[CHAIN.rpc],nativeCurrency:{name:CHAIN.native,symbol:CHAIN.native,decimals:18},blockExplorerUrls:[CHAIN.scan]}]});
     }else throw e;
   }
   location.reload();
@@ -183,7 +183,7 @@ function render(){
   $("slipV").textContent=(S.bps/100)+"%";$("slipV").className=S.bps>500?"v warn":"v";
 
   const R=$("rate"),RT=$("route"),I=$("impact"),M=$("minOut"),G=$("gasV");I.className="v";
-  G.textContent=S.fee!=null?"≈ "+fmt(S.fee,18)+" BOT":(S.acct&&S.onChain&&a&&k?"Shown in your wallet":"–");
+  G.textContent=S.fee!=null?"≈ "+fmt(S.fee,18)+" "+CHAIN.native:(S.acct&&S.onChain&&a&&k?"Shown in your wallet":"–");
   if((k==="wrap"||k==="unwrap")&&a){
     $("amtB").value=fmt(a,O.d);R.textContent="1 "+F.sym+" = 1 "+O.sym;RT.textContent="Direct wrap, no pool fee";I.textContent="0%";M.textContent=fmt(a,O.d)+" "+O.sym;
   }else if(k==="swap"&&a&&S.q&&!S.q.none){
@@ -196,13 +196,13 @@ function render(){
 
   const g=$("go");let txt,dis=true,danger=false;
   if(!S.acct)txt="Connect wallet",dis=false;
-  else if(!S.onChain)txt="Switch to BOT Chain",dis=false;
+  else if(!S.onChain)txt="Switch to BOT Chain Testnet",dis=false;
   else if(S.busy)txt="Waiting for wallet…";
   else if(!k)txt="Choose two different tokens";
   else if(!a)txt="Enter an amount";
   else if(bA!=null&&a>bA)txt="Insufficient "+F.sym;
-  else if(F.native&&bA!=null&&bA-a<GAS_RESERVE)txt="Keep 0.01 BOT for network fees";
-  else if(k==="wrap")txt="Wrap BOT",dis=false;
+  else if(F.native&&bA!=null&&bA-a<GAS_RESERVE)txt="Keep 0.01 "+CHAIN.native+" for network fees";
+  else if(k==="wrap")txt="Wrap "+CHAIN.native,dis=false;
   else if(k==="unwrap")txt="Unwrap WBOT",dis=false;
   else if(!S.q)txt="Finding best price…";
   else if(S.q.none)txt="No route found for this pair";
@@ -224,7 +224,7 @@ async function onGo(){
     const w=new ethers.Contract(WBOT,WABI,S.signer);
     let got;
     if(k==="wrap"||k==="unwrap"){
-      say("Confirm "+(k==="wrap"?"wrapping BOT":"unwrapping WBOT")+" in your wallet…");
+      say("Confirm "+(k==="wrap"?"wrapping "+CHAIN.native:"unwrapping WBOT")+" in your wallet…");
       const tx=k==="wrap"?await w.deposit({value:a}):await w.withdraw(a);hash=tx.hash;
       logTx({t:Date.now(),h:hash,verb:k==="wrap"?"Wrapped":"Unwrapped",i:inTxt+" "+F.sym,o:inTxt+" "+O.sym,st:"pending"});
       say("Submitted. Waiting for confirmation…");
@@ -235,7 +235,7 @@ async function onGo(){
       const needAp=(await tin.allowance(S.acct,ADDR.router))<a;
       const total=1+(F.native?1:0)+(needAp?1:0)+(O.native?1:0);let n=0;
       const step=t=>say(t+" in your wallet ("+(++n)+" of "+total+")…");
-      if(F.native){step("Confirm wrapping BOT");const t=await w.deposit({value:a});await t.wait();wrapped=true}
+      if(F.native){step("Confirm wrapping "+CHAIN.native);const t=await w.deposit({value:a});await t.wait();wrapped=true}
       if(needAp){step("Approve "+symOf(inA));const t=await tin.approve(ADDR.router,S.approve==="max"?ethers.MaxUint256:a);await t.wait()}
       // Re-check the price right before signing so a stale quote can't slip through
       say("Checking the latest price…");
@@ -261,7 +261,7 @@ async function onGo(){
     $("amtA").value="";S.q=null;S.fee=null;
   }catch(e){
     if(hash)updTx(hash,{st:"failed"});
-    let t=errText(e);if(wrapped)t+=" Your BOT was wrapped to WBOT, which you can swap or unwrap any time.";
+    let t=errText(e);if(wrapped)t+=" Your "+CHAIN.native+" was wrapped to WBOT, which you can swap or unwrap any time.";
     say(t,"err");
   }
   S.busy=false;await balances();requote(true);
@@ -317,20 +317,20 @@ function renderPick(){
   }else if(!keys.length)m.append(el("p",{className:"lbl",textContent:"No match. Paste the token's contract address to import it."}));
 }
 async function importTok(addr){
-  const m=$("pickM");m.replaceChildren(el("p",{className:"lbl",textContent:"Reading token from BOT Chain…"}));
+  const m=$("pickM");m.replaceChildren(el("p",{className:"lbl",textContent:"Reading token from BOT Chain Testnet…"}));
   try{
     const c=new ethers.Contract(addr,ERC20,readProv());
     const[sym,d]=await Promise.all([c.symbol(),c.decimals()]);
     if(Number(d)>36)throw new Error("bad decimals");
     const k=addr.toLowerCase();TK[k]={sym:cleanSym(sym),a:ethers.getAddress(addr),d:Number(d),custom:true};
     saveCustom();choose(k);balances();
-  }catch(e){m.replaceChildren(el("p",{className:"lbl",textContent:"No token contract found at this address on BOT Chain."}))}
+  }catch(e){m.replaceChildren(el("p",{className:"lbl",textContent:"No token contract found at this address on BOT Chain Testnet."}))}
 }
 
 // ---------- Approvals manager ----------
 async function renderApr(){
   const L=$("aprL"),M=$("aprM");L.replaceChildren();
-  if(!S.acct||!S.onChain){M.textContent="Connect your wallet on BOT Chain to see approvals.";return}
+  if(!S.acct||!S.onChain){M.textContent="Connect your wallet on BOT Chain Testnet to see approvals.";return}
   M.textContent="Checking approvals…";
   const rows=[];
   await Promise.all(Object.keys(TK).filter(k=>!TK[k].native).map(async k=>{
@@ -361,7 +361,7 @@ function setSlip(b){S.bps=clamp(b,1,5000,50);LS.set("bfx:slip",S.bps);renderSet(
 // ---------- Shareable links: ?from=BOT&to=USDT&amount=10 ----------
 function tokParam(k){return TK[k].native?"BOT":TK[k].custom?TK[k].a:TK[k].sym}
 function syncURL(){try{const u=new URL(location.href);u.searchParams.set("from",tokParam(S.from));u.searchParams.set("to",tokParam(S.to));const v=$("amtA").value.trim();if(v)u.searchParams.set("amount",v);else u.searchParams.delete("amount");history.replaceState(null,"",u)}catch(e){}}
-function resolveTok(v){if(!v)return null;if(v.toUpperCase()==="BOT")return "BOT";const l=v.toLowerCase();if(TK[l])return l;for(const k in TK)if(!TK[k].custom&&TK[k].sym.toLowerCase()===l)return k;return ethers.isAddress(v)?"?":null}
+function resolveTok(v){if(!v)return null;if(v.toUpperCase()==="BOT"||v.toUpperCase()==="TBOT")return "BOT";const l=v.toLowerCase();if(TK[l])return l;for(const k in TK)if(!TK[k].custom&&TK[k].sym.toLowerCase()===l)return k;return ethers.isAddress(v)?"?":null}
 function loadURL(){
   const p=new URLSearchParams(location.search),f=resolveTok(p.get("from")),t=resolveTok(p.get("to"));
   if(f==="?"||t==="?")say("This link uses a token that isn't on your list. Check it on the explorer, then paste its address into the token picker to import it.");

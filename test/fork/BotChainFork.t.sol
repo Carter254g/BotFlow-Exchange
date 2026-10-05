@@ -5,13 +5,13 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {BotFlowRouter} from "../../src/BotFlowRouter.sol";
 
-/// @notice Runs against live BDEX pools on a fork of BOT Chain.
-///         BOT_RPC_URL=https://rpc.botchain.ai forge test --match-path test/fork/*
+/// @notice Runs against live BDEX pools on a fork of BOT Chain Testnet.
+///         BOT_RPC_URL=https://rpc.bohr.life forge test --match-path test/fork/*
 ///         Skipped when BOT_RPC_URL is not set.
 contract BotChainForkTest is Test {
     address constant BDEX_ROUTER = 0x07032d47A1b9f8460cBeE9dC17c1d3E438693929;
     address constant WBOT = 0xD5452816194a3784dBa983426cCe7c122F4abd30;
-    address constant USDT = 0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C;
+    address constant USDT = 0x75edC9335175Fc0552D51D48439F229c10420fe3; // testnet USDT
 
     BotFlowRouter router;
     address user = makeAddr("user");

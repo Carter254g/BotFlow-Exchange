@@ -4,10 +4,11 @@ pragma solidity 0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {BotFlowRouter} from "../src/BotFlowRouter.sol";
 
-/// @notice Deploys BotFlowRouter to BOT Chain.
+/// @notice Deploys BotFlowRouter to BOT Chain Testnet (968) or Mainnet (677).
+///         The BDEX V3 SwapRouter and WBOT share the same address on both networks.
 ///
 ///   OWNER=0xYourMultisig forge script script/Deploy.s.sol \
-///     --rpc-url botchain --broadcast --account deployer
+///     --rpc-url botchain_testnet --broadcast --account deployer
 ///
 /// Optional env: FEE_RECIPIENT (defaults to OWNER), BDEX_ROUTER, WBOT.
 contract Deploy is Script {
@@ -19,7 +20,7 @@ contract Deploy is Script {
         address feeRecipient = vm.envOr("FEE_RECIPIENT", owner);
         address bdex = vm.envOr("BDEX_ROUTER", DEFAULT_BDEX_ROUTER);
         address wbot = vm.envOr("WBOT", DEFAULT_WBOT);
-        require(block.chainid == 677, "Not BOT Chain");
+        require(block.chainid == 968 || block.chainid == 677, "Not BOT Chain");
         require(bdex.code.length > 0 && wbot.code.length > 0, "BDEX router or WBOT not found");
 
         vm.startBroadcast();

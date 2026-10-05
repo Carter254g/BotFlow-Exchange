@@ -12,6 +12,7 @@ runs = 512
 
 [rpc_endpoints]
 botchain = "https://rpc.botchain.ai"
+botchain_testnet = "https://rpc.bohr.life"
 
 [fmt]
 line_length = 120

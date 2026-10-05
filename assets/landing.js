@@ -1,5 +1,5 @@
 /**
- * Fills the hero's example trade with a live BDEX V3 quote: 100 BOT (as WBOT) to USDT,
+ * Fills the hero's example trade with a live BDEX V3 quote: 100 tBOT (as WBOT) to USDT on BOT Chain Testnet,
  * best of all fee tiers. Read-only calls to the public BOT Chain RPC. No wallet needed.
  */
 "use strict";
@@ -11,11 +11,11 @@
   const { ethers } = window;
   const QUOTER = "0x034A705b36067cff99ABf5C662Be881cBd8d0176";
   const WBOT = "0xD5452816194a3784dBa983426cCe7c122F4abd30";
-  const USDT = "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C";
+  const USDT = "0x75edC9335175Fc0552D51D48439F229c10420fe3";
   const ABI = ["function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160,uint32,uint256)",
                "function decimals() view returns (uint8)"];
   try {
-    const p = new ethers.JsonRpcProvider("https://rpc.botchain.ai", 677, { staticNetwork: true });
+    const p = new ethers.JsonRpcProvider("https://rpc.bohr.life", 968, { staticNetwork: true });
     const q = new ethers.Contract(QUOTER, ABI, p);
     const dec = Number(await new ethers.Contract(USDT, ABI, p).decimals().catch(() => 6n));
     const amountIn = ethers.parseEther("100");
