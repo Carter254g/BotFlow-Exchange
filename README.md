@@ -1,6 +1,6 @@
 # BotFlow Exchange
 
-BotFlow Exchange is an open source token swap interface for BOT Chain (chain ID 677). It routes trades through the BDEX V3 contracts and runs entirely in the browser as a single HTML file, with no backend, no tracking and no custody of user funds.
+BotFlow Exchange is an open source swap app for BOT Chain (chain ID 677). It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
 
 **Live demo:** https://carter254g.github.io/BotFlow-Exchange/
 
@@ -50,10 +50,50 @@ New users on BOT Chain often hold native BOT but find that DEX pools trade WBOT,
 
 Every transaction is signed in the user's own wallet. The page never holds keys or funds.
 
+## Smart contract: BotFlowRouter
+
+`src/BotFlowRouter.sol` is the on-chain entry point for BotFlow swaps. It sits in front of the BDEX V3 SwapRouter and adds the things a plain pool router leaves to the front end.
+
+- **Native BOT in one transaction.** `swapExactBOTForTokens` takes BOT as `msg.value`, wraps it and swaps. `swapExactTokensForBOT` swaps and unwraps, sending native BOT to the recipient. Users no longer need separate wrap and unwrap transactions.
+- **Single and multi-hop routes** through one function, using the standard V3 packed path (`token, fee, token, fee, token`). The path layout is validated on chain.
+- **Minimum output enforced on what the user actually receives**, measured by balance change and checked after any protocol fee.
+- **Fee-on-transfer input tokens** are handled by swapping only the amount that actually arrived.
+- **No funds held.** Every call pulls the input, swaps, pays out and resets its router approval in the same transaction. Stray BOT sent to the contract is rejected.
+- **Protocol fee for sustainability**, starting at 0% and hard-capped at 0.30% in the contract itself.
+- **Safety controls.** OpenZeppelin `ReentrancyGuard`, `Pausable` for emergencies, two-step ownership transfer, and custom errors for clear revert reasons.
+
+| Function | What it does |
+| --- | --- |
+| `swapExactTokensForTokens(path, amountIn, minOut, recipient, deadline)` | ERC-20 to ERC-20 |
+| `swapExactBOTForTokens(path, minOut, recipient, deadline)` | Native BOT to ERC-20 (path starts with WBOT) |
+| `swapExactTokensForBOT(path, amountIn, minOut, recipient, deadline)` | ERC-20 to native BOT (path ends with WBOT) |
+| `setFee`, `pause`, `unpause`, `rescue` | Owner only |
+
+### Tests
+
+24 unit and fuzz tests in `test/BotFlowRouter.t.sol` cover every swap path, slippage and deadline checks, malformed paths, fee-on-transfer tokens, a reentrancy attack, fee maths and caps, pausing, ownership and rescue. Every test also checks that the contract is left holding no tokens, no BOT and no open approvals. Line coverage is about 97%.
+
+`test/fork/BotChainFork.t.sol` runs a real BOT to USDT and back trip against live BDEX pools on a fork of BOT Chain.
+
+```
+forge install            # fetch forge-std and OpenZeppelin (git submodules)
+forge test               # unit and fuzz tests
+BOT_RPC_URL=https://rpc.botchain.ai forge test --match-path "test/fork/*"
+```
+
+### Deploy
+
+```
+OWNER=0xYourMultisig forge script script/Deploy.s.sol --rpc-url botchain --broadcast --account deployer
+```
+
+The script refuses to run on any chain other than BOT Chain and checks that the BDEX router and WBOT exist before deploying. Use a multisig as `OWNER`.
+
 ## Contracts
 
 | Contract | Address |
 | --- | --- |
+| BotFlowRouter | Not deployed yet |
 | BDEX V3 SwapRouter | `0x07032d47A1b9f8460cBeE9dC17c1d3E438693929` |
 | BDEX V3 Quoter | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` |
 | WBOT | `0xD5452816194a3784dBa983426cCe7c122F4abd30` |
@@ -61,7 +101,7 @@ Every transaction is signed in the user's own wallet. The page never holds keys 
 
 Network: BOT Chain, chain ID 677, RPC `https://rpc.botchain.ai`, explorer https://scan.botchain.ai
 
-## Run it
+## Run the web app
 
 No build step. Open `index.html` in a browser, or serve the folder with any static host:
 
@@ -73,12 +113,15 @@ then visit http://localhost:8000. The live demo is served by GitHub Pages from t
 
 ## Tech
 
+- Solidity 0.8.24, OpenZeppelin Contracts 5.1, Foundry
 - Plain HTML, CSS and JavaScript in one file
 - [ethers.js](https://docs.ethers.org/v6/) v6 from cdnjs
 - Browser `localStorage` for settings, imported tokens and recent activity
 
 ## Roadmap
 
+- Deploy BotFlowRouter to BOT Chain and switch the web app to route through it
+- Independent security review of BotFlowRouter
 - Shared token list with verified logos
 - USD values next to amounts
 - Add-liquidity and position views for BDEX V3 pools
@@ -91,6 +134,16 @@ then visit http://localhost:8000. The live demo is served by GitHub Pages from t
 - Swaps are re-quoted and simulated before the wallet is asked to sign.
 - Imported tokens are never trusted by name. The address is shown and linked to the explorer.
 - All user-supplied text, such as token symbols, is rendered as plain text, never as HTML.
+
+## Repository layout
+
+```
+index.html                 web app (served by GitHub Pages)
+src/BotFlowRouter.sol      router contract
+src/interfaces/            BDEX router and WBOT interfaces
+test/                      unit, fuzz and fork tests
+script/Deploy.s.sol        deployment script
+```
 
 ## License
 
