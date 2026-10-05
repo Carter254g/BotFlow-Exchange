@@ -114,7 +114,7 @@ then visit http://localhost:8000. The live demo is served by GitHub Pages from t
 ## Tech
 
 - Solidity 0.8.24, OpenZeppelin Contracts 5.1, Foundry
-- Plain HTML, CSS and JavaScript in one file
+- Plain HTML, CSS and JavaScript with no build step
 - [ethers.js](https://docs.ethers.org/v6/) v6 from cdnjs
 - Browser `localStorage` for settings, imported tokens and recent activity
 
@@ -138,7 +138,9 @@ then visit http://localhost:8000. The live demo is served by GitHub Pages from t
 ## Repository layout
 
 ```
-index.html                 web app (served by GitHub Pages)
+index.html                 web app entry page (served by GitHub Pages)
+app/app.js                 web app logic: quoting, routing, wallet, swaps
+app/styles.css             web app styles, light and dark themes
 src/BotFlowRouter.sol      router contract
 src/interfaces/            BDEX router and WBOT interfaces
 test/                      unit, fuzz and fork tests
