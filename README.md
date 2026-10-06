@@ -2,8 +2,7 @@
 
 BotFlow Exchange is an open source swap app for BOT Chain. It currently runs on **BOT Chain Testnet (chain ID 968)**. It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
 
-**Website:** https://carter254g.github.io/BotFlow-Exchange/  
-**Swap app:** https://carter254g.github.io/BotFlow-Exchange/app/
+**Live app:** https://botflow-woad.vercel.app/
 
 ## Why it exists
 
