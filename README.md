@@ -102,7 +102,7 @@ The script deploys to BOT Chain Testnet (use `--rpc-url botchain` for mainnet la
 
 | Contract | Address |
 | --- | --- |
-| BotFlowRouter | Not deployed yet |
+| BotFlowRouter | `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9` (testnet, deployed 2026-10-06, owner `0x65aC7753E03C216096e867e03898a6720B5449F9`, deploy tx `0x5e9dbe0a6afd7ce09db97b505bf8f4dd805d05352e9e2b8e6cc3b2132d6c095d`) |
 | BDEX V3 SwapRouter | `0x07032d47A1b9f8460cBeE9dC17c1d3E438693929` |
 | BDEX V3 QuoterV2 | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` |
 | WBOT | `0xD5452816194a3784dBa983426cCe7c122F4abd30` |
@@ -129,7 +129,7 @@ then visit http://localhost:8000 for the landing page or http://localhost:8000/a
 
 ## Roadmap
 
-- Deploy BotFlowRouter to BOT Chain and switch the web app to route through it
+- BotFlowRouter deployed on BOT Chain Testnet at `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9`. Next: switch the web app to route through it
 - Independent security review of BotFlowRouter
 - Shared token list with verified logos
 - USD values next to amounts
