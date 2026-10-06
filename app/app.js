@@ -33,7 +33,8 @@ for(const c of LS.get("bfx:tokens",[])){
 }
 let S={from:WK,to:UK,acct:null,prov:null,signer:null,ro:null,onChain:false,bal:{},q:null,fee:null,
   bps:clamp(+LS.get("bfx:slip",50),1,5000,50),dl:clamp(+LS.get("bfx:dl",20),1,180,20),
-  approve:LS.get("bfx:approve","exact")==="max"?"max":"exact",busy:false,qid:0,timer:null,side:null};
+  approve:LS.get("bfx:approve","exact")==="max"?"max":"exact",busy:false,qid:0,timer:null,side:null,
+  quoting:false,balLoading:false,connecting:false,steps:null};
 
 function cleanSym(s){s=String(s||"").replace(/[^\w.\-+$]/g,"").slice(0,12);return s||"TOKEN"}
 function el(tag,props,...kids){const e=document.createElement(tag);if(props)for(const[k,v]of Object.entries(props)){if(k==="on")for(const[ev,f]of Object.entries(v))e.addEventListener(ev,f);else if(k in e)e[k]=v;else e.setAttribute(k,v)}for(const c of kids)if(c!=null)e.append(c);return e}
@@ -66,6 +67,7 @@ function errText(e){
 // ---------- Wallet ----------
 async function connect(){
   if(!window.ethereum){say("No wallet found. Install MetaMask, OKX, Bitget or TokenPocket, or open this page in a wallet browser.","err");return}
+  S.connecting=true;render();
   try{
     S.prov=new ethers.BrowserProvider(window.ethereum);
     await S.prov.send("eth_requestAccounts",[]);
@@ -73,6 +75,7 @@ async function connect(){
     await checkChain();
     if(window.ethereum.on){window.ethereum.on("chainChanged",()=>location.reload());window.ethereum.on("accountsChanged",()=>location.reload())}
   }catch(e){say(errText(e),"err")}
+  S.connecting=false;
   render();renderHist();checkPending();requote(true);
 }
 async function checkChain(){
@@ -91,11 +94,12 @@ async function switchChain(){
 async function loadDecimals(){try{TK[UK].d=Number(await new ethers.Contract(USDT,ERC20,readProv()).decimals())}catch(e){}}
 async function balances(){
   if(!S.acct||!S.onChain)return;
+  S.balLoading=true;render();
   const p=readProv();
   await Promise.all(Object.keys(TK).map(async k=>{
     try{S.bal[k]=TK[k].native?await p.getBalance(S.acct):await new ethers.Contract(TK[k].a,ERC20,p).balanceOf(S.acct)}catch(e){S.bal[k]=null}
   }));
-  render();
+  S.balLoading=false;render();
 }
 function watchAsset(k){const t=TK[k];if(!window.ethereum||t.native)return;
   window.ethereum.request({method:"wallet_watchAsset",params:{type:"ERC20",options:{address:t.a,symbol:t.sym,decimals:t.d}}}).catch(()=>{})}
@@ -139,15 +143,16 @@ function swapCall(a,mo,q){
 }
 
 function requote(silent){
-  if(!silent){S.q=null;S.fee=null}
+  if(!silent){S.q=null;S.fee=null;S.steps=null;renderSteps()}
   clearTimeout(S.timer);syncURL();render();
-  const a=amountIn(),k=kind();if(!a||!k)return;
+  const a=amountIn(),k=kind();if(!a||!k){S.quoting=false;render();return}
   const id=++S.qid;
-  if(k!=="swap"){estFee(a,k,id);return}
+  if(k!=="swap"){S.quoting=false;estFee(a,k,id);render();return}
+  S.quoting=true;render();
   S.timer=setTimeout(async()=>{
     const best=await findBest(a);
     if(id!==S.qid)return;
-    S.q=best||{none:true};render();
+    S.q=best||{none:true};S.quoting=false;render();
     if(best)estFee(a,k,id);
   },silent?0:350);
 }
@@ -177,14 +182,20 @@ function render(){
   const F=TK[S.from],O=TK[S.to],k=kind(),a=amountIn();
   $("symA").textContent=F.sym;$("symB").textContent=O.sym;
   const bA=S.bal[S.from],bB=S.bal[S.to];
-  $("balA").textContent=bA==null?"–":fmt(bA,F.d);
-  $("balB").textContent=bB==null?"–":fmt(bB,O.d);
-  $("conn").textContent=S.acct?short(S.acct):"Connect wallet";
+  $("balA").textContent=bA==null?(S.balLoading?"…":"–"):fmt(bA,F.d);
+  $("balB").textContent=bB==null?(S.balLoading?"…":"–"):fmt(bB,O.d);
+  const cn=$("conn");
+  if(S.connecting){cn.innerHTML='<span class="spin" aria-hidden="true"></span>';cn.append("Connecting…")}
+  else cn.textContent=S.acct?short(S.acct):"Connect wallet";
   $("slipV").textContent=(S.bps/100)+"%";$("slipV").className=S.bps>500?"v warn":"v";
 
   const R=$("rate"),RT=$("route"),I=$("impact"),M=$("minOut"),G=$("gasV");I.className="v";
-  G.textContent=S.fee!=null?"≈ "+fmt(S.fee,18)+" "+CHAIN.native:(S.acct&&S.onChain&&a&&k?"Shown in your wallet":"–");
-  if((k==="wrap"||k==="unwrap")&&a){
+  G.textContent=S.fee!=null?"≈ "+fmt(S.fee,18)+" "+CHAIN.native:(S.quoting?"Estimating…":(S.acct&&S.onChain&&a&&k?"Shown in your wallet":"–"));
+  // While a fresh quote is loading show skeleton bars instead of stale dashes
+  const skel=S.quoting&&k==="swap"&&a&&!S.q;
+  for(const elm of [R,RT,I,M])elm.classList.toggle("skel",skel);
+  if(skel){$("amtB").value="";R.textContent=RT.textContent=I.textContent=M.textContent="";}
+  else if((k==="wrap"||k==="unwrap")&&a){
     $("amtB").value=fmt(a,O.d);R.textContent="1 "+F.sym+" = 1 "+O.sym;RT.textContent="Direct wrap, no pool fee";I.textContent="0%";M.textContent=fmt(a,O.d)+" "+O.sym;
   }else if(k==="swap"&&a&&S.q&&!S.q.none){
     $("amtB").value=fmt(S.q.out,O.d);
@@ -194,21 +205,52 @@ function render(){
     M.textContent=fmt(minOut(S.q.out),O.d)+" "+O.sym;
   }else{$("amtB").value="";R.textContent=RT.textContent=I.textContent=M.textContent="–"}
 
-  const g=$("go");let txt,dis=true,danger=false;
-  if(!S.acct)txt="Connect wallet",dis=false;
+  const g=$("go");let txt,dis=true,danger=false,load=false;
+  if(S.connecting)txt="Connecting…",load=true;
+  else if(!S.acct)txt="Connect wallet",dis=false;
   else if(!S.onChain)txt="Switch to BOT Chain Testnet",dis=false;
-  else if(S.busy)txt="Waiting for wallet…";
+  else if(S.busy)txt="Waiting for wallet…",load=true;
   else if(!k)txt="Choose two different tokens";
   else if(!a)txt="Enter an amount";
   else if(bA!=null&&a>bA)txt="Insufficient "+F.sym;
   else if(F.native&&bA!=null&&bA-a<GAS_RESERVE)txt="Keep 0.01 "+CHAIN.native+" for network fees";
   else if(k==="wrap")txt="Wrap "+CHAIN.native,dis=false;
   else if(k==="unwrap")txt="Unwrap WBOT",dis=false;
-  else if(!S.q)txt="Finding best price…";
+  else if(!S.q)txt="Finding best price…",load=true;
   else if(S.q.none)txt="No route found for this pair";
   else if(S.q.impact>=1500)txt="Swap anyway",dis=false,danger=true;
   else txt="Swap",dis=false;
-  g.textContent=txt;g.disabled=dis;g.classList.toggle("danger",danger);
+  setGo(g,txt,load);g.disabled=dis;g.classList.toggle("danger",danger);
+  // Lock the form while a transaction is in flight so edits can't clash with it
+  const lock=S.busy;
+  $("amtA").disabled=lock;$("flip").disabled=lock;$("max").disabled=lock;
+  $("symA").disabled=lock;$("symB").disabled=lock;
+  $("conn").disabled=S.connecting||lock;
+}
+function setGo(g,txt,loading){
+  g.innerHTML=loading?'<span class="spin" aria-hidden="true"></span>':"";
+  g.append(txt);
+}
+
+// Numbered progress list for multi step swaps. States: todo, active, done, failed.
+function startSteps(labels){S.steps=labels.map(l=>({l,s:"todo"}));renderSteps()}
+function setStep(i,s){if(S.steps&&S.steps[i]){S.steps[i].s=s;renderSteps()}}
+function renderSteps(){
+  const o=$("steps");if(!o)return;
+  if(!S.steps||!S.steps.length){o.hidden=true;o.replaceChildren();return}
+  o.hidden=false;
+  o.replaceChildren(...S.steps.map((x,i)=>{
+    const li=el("li",{className:"step-"+x.s});
+    li.append(el("span",{className:"dot",textContent:x.s==="done"?"✓":String(i+1)}),el("span",{textContent:x.l}));
+    return li;
+  }));
+}
+
+// Light and dark theme. An explicit choice wins, otherwise follow the OS setting.
+function paintTheme(){
+  const saved=document.documentElement.dataset.theme;
+  const dark=saved?saved==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  $("theme").textContent=dark?"☀":"☾";
 }
 
 async function onGo(){
@@ -224,34 +266,47 @@ async function onGo(){
     const w=new ethers.Contract(WBOT,WABI,S.signer);
     let got;
     if(k==="wrap"||k==="unwrap"){
+      startSteps(["Confirm in your wallet","Wait for confirmation"]);setStep(0,"active");
       say("Confirm "+(k==="wrap"?"wrapping "+CHAIN.native:"unwrapping WBOT")+" in your wallet…");
       const tx=k==="wrap"?await w.deposit({value:a}):await w.withdraw(a);hash=tx.hash;
       logTx({t:Date.now(),h:hash,verb:k==="wrap"?"Wrapped":"Unwrapped",i:inTxt+" "+F.sym,o:inTxt+" "+O.sym,st:"pending"});
+      setStep(0,"done");setStep(1,"active");
       say("Submitted. Waiting for confirmation…");
       const rc=await tx.wait();if(rc.status!==1)throw new Error("Transaction failed on chain");got=a;
+      setStep(1,"done");
     }else{
       const inA=TK[under(S.from)].a,outA=TK[under(S.to)].a;
       const tin=new ethers.Contract(inA,ERC20,S.signer),tout=new ethers.Contract(outA,ERC20,readProv());
       const needAp=(await tin.allowance(S.acct,ADDR.router))<a;
       const total=1+(F.native?1:0)+(needAp?1:0)+(O.native?1:0);let n=0;
       const step=t=>say(t+" in your wallet ("+(++n)+" of "+total+")…");
-      if(F.native){step("Confirm wrapping "+CHAIN.native);const t=await w.deposit({value:a});await t.wait();wrapped=true}
-      if(needAp){step("Approve "+symOf(inA));const t=await tin.approve(ADDR.router,S.approve==="max"?ethers.MaxUint256:a);await t.wait()}
+      const labels=[];
+      if(F.native)labels.push("Wrap "+CHAIN.native);
+      if(needAp)labels.push("Approve "+symOf(inA));
+      labels.push("Recheck price","Simulate swap","Confirm swap");
+      if(O.native)labels.push("Unwrap to "+CHAIN.native);
+      startSteps(labels);let si=0;setStep(0,"active");
+      const adv=()=>{setStep(si,"done");si++;if(si<labels.length)setStep(si,"active")};
+      if(F.native){step("Confirm wrapping "+CHAIN.native);const t=await w.deposit({value:a});await t.wait();wrapped=true;adv()}
+      if(needAp){step("Approve "+symOf(inA));const t=await tin.approve(ADDR.router,S.approve==="max"?ethers.MaxUint256:a);await t.wait();adv()}
       // Re-check the price right before signing so a stale quote can't slip through
       say("Checking the latest price…");
       const qc=new ethers.Contract(ADDR.quoter,QABI,readProv());
       const fresh=await quoteOn(qc,S.q,a).catch(()=>0n);
       if(fresh<minOut(S.q.out)){S.q={...S.q,out:fresh};throw new Error("PRICE_MOVED")}
       const q={...S.q,out:fresh},{c,fn,args}=swapCall(a,minOut(fresh),q);
+      adv();
       await c[fn].staticCall(args); // simulate first, so a failing swap never costs gas
+      adv();
       const before=await tout.balanceOf(S.acct);
       step("Confirm the swap");
       const tx=await c[fn](args);hash=tx.hash;
       logTx({t:Date.now(),h:hash,verb:"Swapped",i:inTxt+" "+F.sym,o:"~"+fmt(fresh,O.d)+" "+O.sym,st:"pending"});
       say("Swap submitted. Waiting for confirmation…");
       const rc=await tx.wait();if(rc.status!==1)throw new Error("Transaction failed on chain");
+      adv();
       got=(await tout.balanceOf(S.acct))-before;if(got<0n)got=0n;
-      if(O.native&&got>0n){step("Confirm unwrapping WBOT");const t=await w.withdraw(got);await t.wait()}
+      if(O.native&&got>0n){step("Confirm unwrapping WBOT");const t=await w.withdraw(got);await t.wait();adv()}
     }
     updTx(hash,{st:"done",o:fmt(got,O.d)+" "+O.sym});
     const verb=k==="wrap"?"Wrapped":k==="unwrap"?"Unwrapped":"Swapped";
@@ -261,6 +316,7 @@ async function onGo(){
     $("amtA").value="";S.q=null;S.fee=null;
   }catch(e){
     if(hash)updTx(hash,{st:"failed"});
+    if(S.steps){const cur=S.steps.findIndex(x=>x.s==="active");if(cur>=0)setStep(cur,"failed")}
     let t=errText(e);if(wrapped)t+=" Your "+CHAIN.native+" was wrapped to WBOT, which you can swap or unwrap any time.";
     say(t,"err");
   }
@@ -332,6 +388,7 @@ async function renderApr(){
   const L=$("aprL"),M=$("aprM");L.replaceChildren();
   if(!S.acct||!S.onChain){M.textContent="Connect your wallet on BOT Chain Testnet to see approvals.";return}
   M.textContent="Checking approvals…";
+  L.replaceChildren(el("li",{className:"skelrow"}),el("li",{className:"skelrow"}),el("li",{className:"skelrow"}));
   const rows=[];
   await Promise.all(Object.keys(TK).filter(k=>!TK[k].native).map(async k=>{
     try{const v=await new ethers.Contract(TK[k].a,ERC20,readProv()).allowance(S.acct,ADDR.router);if(v>0n)rows.push([k,v])}catch(e){}
@@ -371,6 +428,12 @@ function loadURL(){
 
 // ---------- Wiring ----------
 $("conn").onclick=connect;
+$("theme").onclick=()=>{
+  const saved=document.documentElement.dataset.theme;
+  const dark=saved?saved==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme=dark?"light":"dark";
+  LS.set("bfx:theme",dark?"light":"dark");paintTheme();
+};
 $("go").onclick=onGo;
 $("amtA").oninput=()=>requote();
 $("symA").onclick=()=>openPick("A");
@@ -391,5 +454,7 @@ $("share").onclick=()=>{syncURL();const u=location.href;
 // Keep quotes fresh while the page is open and idle
 setInterval(()=>{if(!S.busy&&document.visibilityState==="visible"&&kind()==="swap"&&amountIn()&&S.q&&!document.querySelector("dialog[open]"))requote(true)},REFRESH_MS);
 
-loadURL();renderSet();requote();
+const savedTheme=LS.get("bfx:theme",null);
+if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme;
+loadURL();renderSet();paintTheme();requote();
 if(window.ethereum&&window.ethereum.selectedAddress){connect()}

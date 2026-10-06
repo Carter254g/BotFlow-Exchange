@@ -70,3 +70,24 @@ header h1{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:1
 header .net{margin-left:0}
 .pill{white-space:nowrap}
 @media (max-width:420px){header h1{font-size:1.08rem}header .net{font-size:.62rem;padding:2px 6px}}
+/* Loading and progress states */
+.spin{display:inline-block;width:1em;height:1em;flex:none;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:rot .7s linear infinite;vertical-align:-.15em;margin-right:.5em}
+@keyframes rot{to{transform:rotate(360deg)}}
+.go{display:flex;align-items:center;justify-content:center}
+button:disabled{cursor:not-allowed}
+input:disabled{opacity:.6}
+.v.skel{display:inline-block;min-width:96px;height:.85em;border-radius:6px;background:linear-gradient(90deg,var(--bd) 25%,var(--in) 50%,var(--bd) 75%);background-size:200% 100%;animation:shim 1.1s linear infinite;vertical-align:baseline}
+@keyframes shim{to{background-position:-200% 0}}
+.skelrow{height:54px;border-radius:12px;background:linear-gradient(90deg,var(--bd) 25%,var(--in) 50%,var(--bd) 75%);background-size:200% 100%;animation:shim 1.1s linear infinite;list-style:none}
+#steps{list-style:none;margin:12px 4px 0;padding:0;display:grid;gap:6px}
+#steps li{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--mut)}
+#steps .dot{width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--bd);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700}
+#steps li.step-active{color:var(--fg)}
+#steps li.step-active .dot{border-color:var(--ac);color:var(--ac);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 25%,transparent)}}
+#steps li.step-done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+#steps li.step-failed{color:var(--err)}
+#steps li.step-failed .dot{background:var(--err);border-color:var(--err);color:#fff}
+#msg.err,#msg.ok{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+#msg.err{border-color:var(--err)}
+#msg.ok{border-color:var(--ok)}

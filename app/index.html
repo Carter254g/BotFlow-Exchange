@@ -12,7 +12,7 @@
 <main>
   <header>
     <h1><a href="../" title="BotFlow home">BotFlow Exchange</a> <span class="net">Testnet</span></h1>
-    <nav><button class="pill" id="setB" aria-label="Settings">⚙</button><button class="pill" id="conn">Connect wallet</button></nav>
+    <nav><button class="pill" id="theme" aria-label="Toggle color theme">☾</button><button class="pill" id="setB" aria-label="Settings">⚙</button><button class="pill" id="conn">Connect wallet</button></nav>
   </header>
   <div class="card">
     <div class="box">
@@ -26,6 +26,7 @@
     </div>
     <button class="go" id="go" disabled>Connect wallet</button>
   </div>
+  <ol id="steps" hidden aria-label="Swap progress"></ol>
   <div class="info">
     <div><span>Rate</span><span class="v" id="rate">–</span></div>
     <div><span>Route</span><span class="v" id="route">–</span></div>
