@@ -173,6 +173,17 @@ script/Deploy.s.sol        deployment script
 
 MIT. See [LICENSE](LICENSE).
 
+## Press and co-marketing kit
+
+Everything the BOT Chain team needs to feature BotFlow, in [`marketing/`](marketing/):
+
+- [Ecosystem listing](marketing/ecosystem-listing.md) — name, tagline, description, chain, links, contact. Paste straight into listing forms.
+- [AMA brief](marketing/ama-brief.md) — promo blurb, 7 questions with drafted answers, host logistics.
+- [Spotlight article](marketing/spotlight-article.md) — builder story, factual throughout, no invented numbers.
+- [Swap links](marketing/swap-links.md) — ready first-trade links plus an HTML embed snippet for docs and faucet pages.
+
+Contact: Telegram `@Raziur306`.
+
 ## Notice
 
 BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Verify contract addresses on https://scan.botchain.ai (mainnet) or https://scan.bohr.life (testnet) before use.
