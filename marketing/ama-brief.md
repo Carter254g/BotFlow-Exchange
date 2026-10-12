@@ -1,10 +1,10 @@
 # BotFlow Telegram AMA Brief (45–60 min, for the host + our prep)
 
 ## Suggested title
-Swapping safely on BOT Chain: how BotFlow routes every trade, plus AI agents that spend safely (BotGuard teaser)
+Swapping safely on BOT Chain: how BotFlow routes every trade
 
 ## Promo blurb (for the announcement post)
-Join the BotFlow team for a live AMA on safe swapping on BOT Chain: how smart routing finds the best BDEX price, how the app protects you before you sign, and what's next, including AI agents with hard spending budgets. Bring questions, bring skepticism. Thursday [DATE], [TIME] UTC, right here.
+Join the BotFlow team for a live AMA on safe swapping on BOT Chain: how smart routing finds the best BDEX price, how the app protects you before you sign, and what's next for trading on BOT Chain. Bring questions, bring skepticism. Thursday [DATE], [TIME] UTC, right here.
 
 ## Questions + drafted answers
 
@@ -26,10 +26,7 @@ Join the BotFlow team for a live AMA on safe swapping on BOT Chain: how smart ro
 6. **Is it audited?**
    Honestly: not yet independently audited. It has 24 Foundry unit+fuzz tests (~97% coverage), a fork test against live pools, and a live 0.05-BOT mainnet shakedown swap. An audit is the funded next step before marketing to big balances.
 
-7. **What's the BotGuard connection? (teaser)**
-   Sister project: instead of humans swapping safely, AI agents spending safely: hard budgets, allowlists, instant revoke, and tamper-evident receipts of every decision. Same philosophy, new user: the machine.
-
-8. **What's next? (roadmap)**
+7. **What's next? (roadmap)**
    Audit → approvals and routing polish → shared verified token list → USD values → liquidity/position views → multi-pool split routing.
 
 ## Host logistics

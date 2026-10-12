@@ -129,7 +129,7 @@ No build step. Serve the folder with any static host:
 python3 -m http.server 8000
 ```
 
-then visit http://localhost:8000 for the landing page or http://localhost:8000/app/ for the swap app. The live demo is served by GitHub Pages from the `main` branch.
+then visit http://localhost:8000 for the landing page or http://localhost:8000/app/ for the swap app. The production app at https://botflow-woad.vercel.app/ deploys from the `main` branch.
 
 ## Tech
 
