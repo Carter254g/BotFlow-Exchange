@@ -90,7 +90,7 @@ Testnet:
 OWNER=0xYourMultisig forge script script/Deploy.s.sol --rpc-url botchain_testnet --broadcast --account deployer
 ```
 
-Mainnet (677), done 2026-10-12 — `BotFlowRouter` at `0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524`
+Mainnet (677), done 2026-10-12. `BotFlowRouter` at `0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524`
 ([deploy tx](https://scan.botchain.ai/tx/0x3382afb89faacb81c41700265b3f35b0b1dab6e0e162ab9cfa45f0d3c0afa21a),
 owner `0x69395eE7fd2c7FF171A50926e7f3DCCC99133A7F`, fee 0%). Compiled with solc 0.8.24
 (optimizer 200 runs, paris); full record in `deployments/botflow-mainnet.json`.

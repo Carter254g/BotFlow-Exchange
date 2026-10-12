@@ -1,6 +1,6 @@
 # Shareable Swap Links (for faucet page, docs, starter guides)
 
-Base: https://botflow-woad.vercel.app — unknown token addresses in links are
+Base: https://botflow-woad.vercel.app. Unknown token addresses in links are
 never auto-imported, so these are safe to publish. Amounts are examples.
 
 ## First-trade links (BOT -> USDT)
@@ -26,4 +26,4 @@ never auto-imported, so these are safe to publish. Amounts are examples.
 Testnet app history: chain 968, RPC https://rpc.bohr.life, explorer
 https://scan.bohr.life, faucet https://faucet.botchain.ai/basic
 (10 tBOT + 1000 test USDT/day). Keep this faucet reliably dripping while
-builders iterate — a dry faucet stalls every testnet project, not just ours.
+builders iterate. A dry faucet stalls every testnet project, not just ours.
