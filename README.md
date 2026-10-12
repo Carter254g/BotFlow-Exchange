@@ -1,6 +1,6 @@
 # BotFlow Exchange
 
-BotFlow Exchange is an open source swap app for BOT Chain. It currently runs on **BOT Chain Testnet (chain ID 968)**. It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
+BotFlow Exchange is an open source swap app for BOT Chain. It runs on **BOT Chain Mainnet (chain ID 677)**, after starting on Testnet (968). It has two parts: `BotFlowRouter`, a Solidity contract that routes swaps through BDEX V3 liquidity, and a web app that runs entirely in the browser with no backend, no tracking and no custody of user funds.
 
 **Live app:** https://botflow-woad.vercel.app/
 **Whitepaper:** [BotFlow-Exchange-Whitepaper.pdf](whitepaper/BotFlow-Exchange-Whitepaper.pdf)
@@ -35,7 +35,7 @@ New users on BOT Chain often hold native BOT but find that DEX pools trade WBOT,
 - **Shareable swap links.** `/app/?from=BOT&to=USDT&amount=10` opens the page with that swap filled in, so communities and projects can link straight to a trade. Unknown token addresses in a link are never imported automatically.
 - **Add token to wallet** after a swap.
 - **Recent activity** for each wallet with explorer links. Pending transactions are tracked even if the page is closed, and their result is checked the next time the wallet connects.
-- **Wallet and network handling.** Works with MetaMask, OKX, Bitget, TokenPocket and other EVM wallets. Switches to BOT Chain Testnet, or adds it if the wallet doesn't have it.
+- **Wallet and network handling.** Works with MetaMask, OKX, Bitget, TokenPocket and other EVM wallets. Switches to BOT Chain Mainnet, or adds it if the wallet doesn't have it.
 - **Mobile first, light and dark mode.**
 
 ## How a swap works
@@ -84,31 +84,42 @@ BOT_RPC_URL=https://rpc.bohr.life forge test --match-path "test/fork/*"
 
 ### Deploy
 
+Testnet:
+
 ```
 OWNER=0xYourMultisig forge script script/Deploy.s.sol --rpc-url botchain_testnet --broadcast --account deployer
 ```
 
-The script deploys to BOT Chain Testnet (use `--rpc-url botchain` for mainnet later), refuses to run on any other chain, and checks that the BDEX router and WBOT exist before deploying. Use a multisig as `OWNER`.
+Mainnet (677), done 2026-10-12 — `BotFlowRouter` at `0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524`
+([deploy tx](https://scan.botchain.ai/tx/0x3382afb89faacb81c41700265b3f35b0b1dab6e0e162ab9cfa45f0d3c0afa21a),
+owner `0x69395eE7fd2c7FF171A50926e7f3DCCC99133A7F`, fee 0%). Compiled with solc 0.8.24
+(optimizer 200 runs, paris); full record in `deployments/botflow-mainnet.json`.
 
-## Network and contracts (BOT Chain Testnet)
+The script refuses to run on any other chain, and checks that the BDEX router and WBOT exist before deploying. Use a multisig as `OWNER`.
+
+## Network and contracts (BOT Chain Mainnet)
 
 | | |
 | --- | --- |
-| Chain ID | 968 (`0x3c8`) |
-| RPC | `https://rpc.bohr.life` |
-| Explorer | https://scan.bohr.life |
-| Native coin | tBOT (18 decimals) |
-| Faucet | https://faucet.botchain.ai/basic (10 tBOT and 1000 test USDT per day) |
+| Chain ID | 677 (`0x2a5`) |
+| RPC | `https://rpc.botchain.ai` |
+| Explorer | https://scan.botchain.ai |
+| Native coin | BOT (18 decimals) |
 
 | Contract | Address |
 | --- | --- |
-| BotFlowRouter | `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9` (testnet, deployed 2026-10-06, owner `0x65aC7753E03C216096e867e03898a6720B5449F9`, deploy tx `0x5e9dbe0a6afd7ce09db97b505bf8f4dd805d05352e9e2b8e6cc3b2132d6c095d`) |
-| BDEX V3 SwapRouter | `0x07032d47A1b9f8460cBeE9dC17c1d3E438693929` |
-| BDEX V3 QuoterV2 | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` |
-| WBOT | `0xD5452816194a3784dBa983426cCe7c122F4abd30` |
-| USDT (test) | `0x75edC9335175Fc0552D51D48439F229c10420fe3` |
+| BotFlowRouter | `0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524` (mainnet, deployed 2026-10-12, owner `0x69395eE7fd2c7FF171A50926e7f3DCCC99133A7F`, fee 0%, deploy tx `0x3382afb89faacb81c41700265b3f35b0b1dab6e0e162ab9cfa45f0d3c0afa21a`) |
+| BDEX V3 SwapRouter | `0x07032d47A1b9f8460cBeE9dC17c1d3E438693929` (same on testnet) |
+| BDEX V3 QuoterV2 | `0x034A705b36067cff99ABf5C662Be881cBd8d0176` (same on testnet) |
+| WBOT | `0xD5452816194a3784dBa983426cCe7c122F4abd30` (same on testnet) |
+| USDT (mainnet) | `0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C` |
 
-The BDEX V3 contracts and WBOT use the same addresses on mainnet (chain 677). Only USDT differs: mainnet USDT is `0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C`. Moving to mainnet later means changing the `CHAIN` settings and the USDT address in `app/app.js` and `assets/landing.js`.
+Testnet history (chain 968, RPC `https://rpc.bohr.life`, explorer https://scan.bohr.life):
+BotFlowRouter `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9` (deployed 2026-10-06),
+test USDT `0x75edC9335175Fc0552D51D48439F229c10420fe3`,
+faucet https://faucet.botchain.ai/basic.
+
+> The web app still targets Testnet: switching its `CHAIN` settings and USDT address in `app/app.js` (and `assets/landing.js`) to the mainnet values above is the remaining cutover step.
 
 ## Run the web app
 
@@ -129,7 +140,7 @@ then visit http://localhost:8000 for the landing page or http://localhost:8000/a
 
 ## Roadmap
 
-- BotFlowRouter deployed on BOT Chain Testnet at `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9`. Next: switch the web app to route through it
+- BotFlowRouter deployed on BOT Chain Testnet at `0xEA00197fe5Ec5E5BcF2F6Bdc180d187c46c4aCD9`, then on Mainnet at `0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524`. Next: switch the web app to mainnet and route swaps through the router
 - Independent security review of BotFlowRouter
 - Shared token list with verified logos
 - USD values next to amounts
@@ -164,4 +175,4 @@ MIT. See [LICENSE](LICENSE).
 
 ## Notice
 
-BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Verify contract addresses on https://scan.bohr.life before use.
+BotFlow Exchange is an independent interface and is not affiliated with BOT Chain or BDEX. Verify contract addresses on https://scan.botchain.ai (mainnet) or https://scan.bohr.life (testnet) before use.
