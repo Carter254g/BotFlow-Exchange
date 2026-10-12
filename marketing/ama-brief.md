@@ -1,10 +1,10 @@
 # BotFlow Telegram AMA Brief (45–60 min, for the host + our prep)
 
 ## Suggested title
-Swapping safely on BOT Chain: how BotFlow routes every trade
+Swapping safely on BOT Chain: how BotFlow routes every trade, plus what's next for agent-driven trading
 
 ## Promo blurb (for the announcement post)
-Join the BotFlow team for a live AMA on safe swapping on BOT Chain: how smart routing finds the best BDEX price, how the app protects you before you sign, and what's next for trading on BOT Chain. Bring questions, bring skepticism. Thursday [DATE], [TIME] UTC, right here.
+Co-hosted by the BotFlow team and the BOT Chain community team, promoted to both communities. Join us for a live AMA on safe swapping on BOT Chain: how smart routing finds the best BDEX price, how the app protects you before you sign, and what's next, including trading by AI agents. Bring questions, bring skepticism. Thursday [DATE], [TIME] UTC, right here.
 
 ## Questions + drafted answers
 
@@ -26,10 +26,14 @@ Join the BotFlow team for a live AMA on safe swapping on BOT Chain: how smart ro
 6. **Is it audited?**
    Honestly: not yet independently audited. It has 24 Foundry unit+fuzz tests (~97% coverage), a fork test against live pools, and a live 0.05-BOT mainnet shakedown swap. An audit is the funded next step before marketing to big balances.
 
-7. **What's next? (roadmap)**
+7. **Can AI agents trade through BotFlow?**
+   Technically yes today: the router is permissionless, so any wallet can call it, including one controlled by an agent. What doesn't exist yet is guardrails for that: spending budgets, allowlists, and verifiable records of why the agent traded. That guarded agent trading is the research direction after the audit.
+
+8. **What's next? (roadmap)**
    Audit → approvals and routing polish → shared verified token list → USD values → liquidity/position views → multi-pool split routing.
 
 ## Host logistics
+- Both sides post the announcement 48 hours ahead so both communities show up.
 - Ask us to demo one live small trade on screen share (0.05–0.1 BOT).
 - Keep a pinned message with: app link, router explorer link, "start small" warning.
 - Collect unanswered questions for a follow-up post.
