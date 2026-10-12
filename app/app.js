@@ -1,15 +1,15 @@
 /**
  * BotFlow Exchange web app.
  *
- * Talks to BOT Chain Testnet (chain ID 968) through the user's wallet and the public RPC.
- * Quotes come from the BDEX V3 Quoter; swaps go through the BDEX V3 SwapRouter.
+ * Talks to BOT Chain Mainnet (chain ID 677) through the user's wallet and the public RPC.
+ * Quotes come from the BDEX V3 Quoter; swaps go through the BotFlowRouter contract.
  * Depends on ethers v6, loaded as a global from cdnjs in index.html.
  */
 "use strict";
 
-const CHAIN={id:968,hex:"0x3c8",name:"BOT Chain Testnet",rpc:"https://rpc.bohr.life",scan:"https://scan.bohr.life",faucet:"https://faucet.botchain.ai/basic",native:"tBOT"};
-const ADDR={router:"0x07032d47A1b9f8460cBeE9dC17c1d3E438693929",quoter:"0x034A705b36067cff99ABf5C662Be881cBd8d0176"};
-const WBOT="0xD5452816194a3784dBa983426cCe7c122F4abd30",USDT="0x75edC9335175Fc0552D51D48439F229c10420fe3";
+const CHAIN={id:677,hex:"0x2a5",name:"BOT Chain",rpc:"https://rpc.botchain.ai",scan:"https://scan.botchain.ai",native:"BOT"};
+const ADDR={router:"0x30E2dA3Bb34FC2d17F86318daaf45Aa72e7fe524",quoter:"0x034A705b36067cff99ABf5C662Be881cBd8d0176"};
+const WBOT="0xD5452816194a3784dBa983426cCe7c122F4abd30",USDT="0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C";
 const WK=WBOT.toLowerCase(),UK=USDT.toLowerCase();
 const ERC20=["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function symbol() view returns (string)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
 const WABI=[...ERC20,"function deposit() payable","function withdraw(uint256)"];
@@ -17,10 +17,12 @@ const QABI=[
   "function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96)) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)",
   "function quoteExactInput(bytes path,uint256 amountIn) returns (uint256 amountOut,uint160[] sqrtPriceX96AfterList,uint32[] initializedTicksCrossedList,uint256 gasEstimate)"];
 const RABI=[
-  "function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256 amountOut)",
-  "function exactInput((bytes path,address recipient,uint256 deadline,uint256 amountIn,uint256 amountOutMinimum)) payable returns (uint256 amountOut)"];
+  "function swapExactTokensForTokens(bytes path,uint256 amountIn,uint256 minOut,address recipient,uint256 deadline)",
+  "function swapExactTokensForBOT(bytes path,uint256 amountIn,uint256 minOut,address recipient,uint256 deadline)",
+  "function swapExactBOTForTokens(bytes path,uint256 minOut,address recipient,uint256 deadline) payable",
+  "error ZeroAddress()","error ZeroAmount()","error Expired()","error InvalidPath()","error InsufficientOutput(uint256 amountOut,uint256 minimum)","error FeeTooHigh()","error NativeTransferFailed()","error UnexpectedNativeSender()"];
 const FEES=[3000,500,10000,100],HOP_FEES=[500,3000,10000],MIDS=[WBOT,USDT];
-const GAS_RESERVE=ethers.parseEther("0.01"),UNWRAP_GAS=50000n,REFRESH_MS=15000;
+const GAS_RESERVE=ethers.parseEther("0.01"),REFRESH_MS=15000;
 const $=id=>document.getElementById(id);
 
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -55,12 +57,13 @@ function errText(e){
   if(e&&(e.code==="ACTION_REJECTED"||e.code===4001||(e.info&&e.info.error&&e.info.error.code===4001)))return "You rejected the request in your wallet.";
   if(e&&e.message==="PRICE_MOVED")return "The price dropped below your minimum since the quote. Check the new quote and try again.";
   const s=[e&&e.shortMessage,e&&e.reason,e&&e.info&&e.info.error&&e.info.error.message,e&&e.message].filter(Boolean).join(" ");
-  if(/Too little received/i.test(s))return "The price moved more than your slippage setting. Try again, or raise slippage in Settings.";
-  if(/Transaction too old/i.test(s))return "The swap wasn't confirmed before its deadline. Try again, or allow more time in Settings.";
+  if(/Too little received|InsufficientOutput/i.test(s))return "The price moved more than your slippage setting. Try again, or raise slippage in Settings.";
+  if(/Transaction too old|Expired/i.test(s))return "The swap wasn't confirmed before its deadline. Try again, or allow more time in Settings.";
+  if(/InvalidPath/i.test(s))return "That route isn't valid for this trade. Pick a different pair.";
   if(/\bSTF\b|transfer amount exceeds/i.test(s))return "Token transfer failed. Check your balance and approval, then try again.";
-  if(/insufficient funds/i.test(s))return "Not enough "+CHAIN.native+" to pay the network fee. Get free test tokens from the faucet: "+CHAIN.faucet;
+  if(/insufficient funds/i.test(s))return "Not enough "+CHAIN.native+" to pay for this. You need the trade amount plus the network fee.";
   if(/nonce/i.test(s))return "Your wallet has another transaction waiting. Let it finish, then try again.";
-  if(/network|timeout|failed to fetch|could not detect/i.test(s))return "Couldn't reach BOT Chain Testnet. Check your connection and try again.";
+  if(/network|timeout|failed to fetch|could not detect/i.test(s))return "Couldn't reach BOT Chain. Check your connection and try again.";
   return (e&&(e.shortMessage||e.reason||e.message))||"Transaction failed";
 }
 
@@ -136,11 +139,16 @@ async function findBest(a){
   }
   return best;
 }
+// A swap through BotFlowRouter. The router wraps/unwraps native BOT itself,
+// so the app never sends separate wrap transactions for trades.
 function swapCall(a,mo,q){
   const r=new ethers.Contract(ADDR.router,RABI,S.signer),deadline=Math.floor(Date.now()/1000)+S.dl*60;
-  if(q.path.length===2)return{c:r,fn:"exactInputSingle",args:{tokenIn:q.path[0],tokenOut:q.path[1],fee:q.fees[0],recipient:S.acct,deadline,amountIn:a,amountOutMinimum:mo,sqrtPriceLimitX96:0}};
-  return{c:r,fn:"exactInput",args:{path:encPath(q.path,q.fees),recipient:S.acct,deadline,amountIn:a,amountOutMinimum:mo}};
+  const path=encPath(q.path,q.fees);
+  if(TK[S.from].native)return{c:r,fn:"swapExactBOTForTokens",args:[path,mo,S.acct,deadline],value:a};
+  if(TK[S.to].native)return{c:r,fn:"swapExactTokensForBOT",args:[path,a,mo,S.acct,deadline]};
+  return{c:r,fn:"swapExactTokensForTokens",args:[path,a,mo,S.acct,deadline]};
 }
+function callArgs(s){return s.value?[...s.args,{value:s.value}]:s.args}
 
 function requote(silent){
   if(!silent){S.q=null;S.fee=null;S.steps=null;renderSteps()}
@@ -164,12 +172,13 @@ async function estFee(a,k,id){
     if(k==="wrap")gas=await w.deposit.estimateGas({value:a});
     else if(k==="unwrap")gas=await w.withdraw.estimateGas(a);
     else{
-      if(TK[S.from].native||!S.q||S.q.none)return;
-      const tin=new ethers.Contract(TK[under(S.from)].a,ERC20,readProv());
-      if((await tin.allowance(S.acct,ADDR.router))<a)return;
-      const{c,fn,args}=swapCall(a,minOut(S.q.out),S.q);
-      gas=await c[fn].estimateGas(args);
-      if(TK[S.to].native)gas+=UNWRAP_GAS;
+      if(!S.q||S.q.none)return;
+      if(!TK[S.from].native){
+        const tin=new ethers.Contract(TK[under(S.from)].a,ERC20,readProv());
+        if((await tin.allowance(S.acct,ADDR.router))<a)return;
+      }
+      const s=swapCall(a,minOut(S.q.out),S.q);
+      gas=await s.c[s.fn].estimateGas(...callArgs(s));
     }
     const fd=await readProv().getFeeData(),gp=fd.gasPrice||fd.maxFeePerGas;
     if(!gp||id!==S.qid)return;
@@ -208,7 +217,7 @@ function render(){
   const g=$("go");let txt,dis=true,danger=false,load=false;
   if(S.connecting)txt="Connecting…",load=true;
   else if(!S.acct)txt="Connect wallet",dis=false;
-  else if(!S.onChain)txt="Switch to BOT Chain Testnet",dis=false;
+  else if(!S.onChain)txt="Switch to BOT Chain",dis=false;
   else if(S.busy)txt="Waiting for wallet…",load=true;
   else if(!k)txt="Choose two different tokens";
   else if(!a)txt="Enter an amount";
@@ -261,7 +270,7 @@ async function onGo(){
   if(k==="swap"&&S.q.impact>=1500&&!confirm("Price impact is "+pct(S.q.impact)+". You would get much less than the market rate. Swap anyway?"))return;
   const F=TK[S.from],O=TK[S.to],inTxt=fmt(a,F.d),outKey=S.to;
   S.busy=true;render();
-  let wrapped=false,hash=null;
+  let hash=null;
   try{
     const w=new ethers.Contract(WBOT,WABI,S.signer);
     let got;
@@ -276,37 +285,36 @@ async function onGo(){
       setStep(1,"done");
     }else{
       const inA=TK[under(S.from)].a,outA=TK[under(S.to)].a;
-      const tin=new ethers.Contract(inA,ERC20,S.signer),tout=new ethers.Contract(outA,ERC20,readProv());
-      const needAp=(await tin.allowance(S.acct,ADDR.router))<a;
-      const total=1+(F.native?1:0)+(needAp?1:0)+(O.native?1:0);let n=0;
+      const tin=F.native?null:new ethers.Contract(inA,ERC20,S.signer);
+      const outIsNative=O.native;
+      const tout=outIsNative?null:new ethers.Contract(outA,ERC20,readProv());
+      const needAp=!F.native&&(await tin.allowance(S.acct,ADDR.router))<a;
+      const total=1+(needAp?1:0);let n=0;
       const step=t=>say(t+" in your wallet ("+(++n)+" of "+total+")…");
       const labels=[];
-      if(F.native)labels.push("Wrap "+CHAIN.native);
       if(needAp)labels.push("Approve "+symOf(inA));
       labels.push("Recheck price","Simulate swap","Confirm swap");
-      if(O.native)labels.push("Unwrap to "+CHAIN.native);
       startSteps(labels);let si=0;setStep(0,"active");
       const adv=()=>{setStep(si,"done");si++;if(si<labels.length)setStep(si,"active")};
-      if(F.native){step("Confirm wrapping "+CHAIN.native);const t=await w.deposit({value:a});await t.wait();wrapped=true;adv()}
       if(needAp){step("Approve "+symOf(inA));const t=await tin.approve(ADDR.router,S.approve==="max"?ethers.MaxUint256:a);await t.wait();adv()}
       // Re-check the price right before signing so a stale quote can't slip through
       say("Checking the latest price…");
       const qc=new ethers.Contract(ADDR.quoter,QABI,readProv());
       const fresh=await quoteOn(qc,S.q,a).catch(()=>0n);
       if(fresh<minOut(S.q.out)){S.q={...S.q,out:fresh};throw new Error("PRICE_MOVED")}
-      const q={...S.q,out:fresh},{c,fn,args}=swapCall(a,minOut(fresh),q);
+      const q={...S.q,out:fresh},s=swapCall(a,minOut(fresh),q);
       adv();
-      await c[fn].staticCall(args); // simulate first, so a failing swap never costs gas
+      await s.c[s.fn].staticCall(...callArgs(s)); // simulate first, so a failing swap never costs gas
       adv();
-      const before=await tout.balanceOf(S.acct);
+      // The router sends native BOT directly for BOT-out trades; measure that balance instead
+      const before=outIsNative?await readProv().getBalance(S.acct):await tout.balanceOf(S.acct);
       step("Confirm the swap");
-      const tx=await c[fn](args);hash=tx.hash;
+      const tx=await s.c[s.fn](...callArgs(s));hash=tx.hash;
       logTx({t:Date.now(),h:hash,verb:"Swapped",i:inTxt+" "+F.sym,o:"~"+fmt(fresh,O.d)+" "+O.sym,st:"pending"});
       say("Swap submitted. Waiting for confirmation…");
       const rc=await tx.wait();if(rc.status!==1)throw new Error("Transaction failed on chain");
       adv();
-      got=(await tout.balanceOf(S.acct))-before;if(got<0n)got=0n;
-      if(O.native&&got>0n){step("Confirm unwrapping WBOT");const t=await w.withdraw(got);await t.wait();adv()}
+      got=(outIsNative?await readProv().getBalance(S.acct):await tout.balanceOf(S.acct))-before;if(got<0n)got=0n;
     }
     updTx(hash,{st:"done",o:fmt(got,O.d)+" "+O.sym});
     const verb=k==="wrap"?"Wrapped":k==="unwrap"?"Unwrapped":"Swapped";
@@ -317,8 +325,7 @@ async function onGo(){
   }catch(e){
     if(hash)updTx(hash,{st:"failed"});
     if(S.steps){const cur=S.steps.findIndex(x=>x.s==="active");if(cur>=0)setStep(cur,"failed")}
-    let t=errText(e);if(wrapped)t+=" Your "+CHAIN.native+" was wrapped to WBOT, which you can swap or unwrap any time.";
-    say(t,"err");
+    say(errText(e),"err");
   }
   S.busy=false;await balances();requote(true);
 }
@@ -373,20 +380,20 @@ function renderPick(){
   }else if(!keys.length)m.append(el("p",{className:"lbl",textContent:"No match. Paste the token's contract address to import it."}));
 }
 async function importTok(addr){
-  const m=$("pickM");m.replaceChildren(el("p",{className:"lbl",textContent:"Reading token from BOT Chain Testnet…"}));
+  const m=$("pickM");m.replaceChildren(el("p",{className:"lbl",textContent:"Reading token from BOT Chain…"}));
   try{
     const c=new ethers.Contract(addr,ERC20,readProv());
     const[sym,d]=await Promise.all([c.symbol(),c.decimals()]);
     if(Number(d)>36)throw new Error("bad decimals");
     const k=addr.toLowerCase();TK[k]={sym:cleanSym(sym),a:ethers.getAddress(addr),d:Number(d),custom:true};
     saveCustom();choose(k);balances();
-  }catch(e){m.replaceChildren(el("p",{className:"lbl",textContent:"No token contract found at this address on BOT Chain Testnet."}))}
+  }catch(e){m.replaceChildren(el("p",{className:"lbl",textContent:"No token contract found at this address on BOT Chain."}))}
 }
 
 // ---------- Approvals manager ----------
 async function renderApr(){
   const L=$("aprL"),M=$("aprM");L.replaceChildren();
-  if(!S.acct||!S.onChain){M.textContent="Connect your wallet on BOT Chain Testnet to see approvals.";return}
+  if(!S.acct||!S.onChain){M.textContent="Connect your wallet on BOT Chain to see approvals.";return}
   M.textContent="Checking approvals…";
   L.replaceChildren(el("li",{className:"skelrow"}),el("li",{className:"skelrow"}),el("li",{className:"skelrow"}));
   const rows=[];
