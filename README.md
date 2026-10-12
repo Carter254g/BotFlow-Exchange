@@ -178,7 +178,6 @@ MIT. See [LICENSE](LICENSE).
 Everything the BOT Chain team needs to feature BotFlow, in [`marketing/`](marketing/):
 
 - [Ecosystem listing](marketing/ecosystem-listing.md) — name, tagline, description, chain, links, contact. Paste straight into listing forms.
-- [AMA brief](marketing/ama-brief.md) — promo blurb, 7 questions with drafted answers, host logistics.
 - [Spotlight article](marketing/spotlight-article.md) — builder story, factual throughout, no invented numbers.
 - [Swap links](marketing/swap-links.md) — ready first-trade links plus an HTML embed snippet for docs and faucet pages.
 
