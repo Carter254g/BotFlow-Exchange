@@ -5,7 +5,7 @@
 **Tagline (60 chars):** Swap on BOT Chain in one flow, with native BOT in and out.
 
 **Short description (280 chars):**
-BotFlow is a non-custodial swap app on BOT Chain Mainnet. It routes trades through BDEX V3 liquidity with native BOT in and out, pre-sign price re-checks, and plain-language errors. Everything runs in the browser, no backend, no custody.
+Trade any token on BOT Chain Mainnet in one guided flow. BotFlow finds the best BDEX price, handles native BOT for you, shows every cost before you sign, and never holds your keys.
 
 **Category:** DeFi / DEX
 
