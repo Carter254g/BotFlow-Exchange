@@ -1,4 +1,4 @@
-# BotFlow Ecosystem Listing Kit (copy-paste for botchain.ai / docs forms)
+# BotFlow Ecosystem Listing Kit
 
 **Project name:** BotFlow Exchange
 
