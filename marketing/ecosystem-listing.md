@@ -2,9 +2,9 @@
 
 **Project name:** BotFlow Exchange
 
-**Tagline (60 chars):** Swap on BOT Chain in one flow, with native BOT in and out.
+**Tagline:** Swap on BOT Chain in one flow, with native BOT in and out.
 
-**Short description (280 chars):**
+**Short description:**
 Trade any token on BOT Chain Mainnet in one guided flow. BotFlow finds the best BDEX price, handles native BOT for you, shows every cost before you sign, and never holds your keys.
 
 **Category:** DeFi / DEX
